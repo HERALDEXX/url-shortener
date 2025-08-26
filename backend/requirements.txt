@@ -1,11 +1,11 @@
 # Django URL Shortener Backend Dependencies
 
 # Django Framework
-Django==4.2.7
-djangorestframework==3.14.0
+Django==4.2.22
+djangorestframework==3.15.2
 
 # Database
-PyMySQL==1.1.0
+PyMySQL==1.1.1
 crytography==45.0.6
 
 # CORS handling for frontend integration
@@ -25,5 +25,5 @@ pytest==7.4.3
 pytest-django==4.7.0
 
 # Production server (optional)
-gunicorn==21.2.0
+gunicorn==23.0.0
 whitenoise==6.6.0
