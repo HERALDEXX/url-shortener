@@ -1,7 +1,7 @@
 # Django URL Shortener Backend Dependencies
 
 # Django Framework
-Django==4.2.7
+Django==4.2.22
 djangorestframework==3.14.0
 
 # Database
