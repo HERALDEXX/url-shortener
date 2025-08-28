@@ -160,5 +160,5 @@ BASE_URL = os.getenv('BASE_URL', 'http://localhost:8000')
 # Ensure static directory exists to avoid staticfiles warning
 STATIC_DIR = BASE_DIR / 'static'
 if not STATIC_DIR.exists():
-    print("Creating static directory...")
+    print("Creating directory for static files...")
     STATIC_DIR.mkdir(parents=True, exist_ok=True)
