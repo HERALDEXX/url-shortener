@@ -17,6 +17,7 @@ A full-stack web application that allows users to shorten long URLs, track click
 - 📁 [Project Structure](#project-structure)
 - 📚 [API Documentation](#api-documentation)
 - 🔄 [Development](#development)
+- 🌿 [Branches](#branches)
 - 🚀 [Deployment](#deployment)
 - 🔧 [Troubleshooting](#troubleshooting)
 - 🤝 [Contributing](#contributing)
@@ -234,20 +235,22 @@ Health check endpoint
 
 ### Daily Workflow
 
-```bash
-git pull origin dev
-```
+- ```bash
+  git pull origin dev
+  ```
 
-```bash
-# Backend
-cd backend && source venv/bin/activate  # or .\venv\Scripts\Activate.ps1
-python manage.py runserver
-```
+- Make your changes...
 
-```bash
-# Frontend (separate terminal window/tab)
-cd frontend && python -m http.server 8080
-```
+- ```bash
+  # Backend
+  cd backend && source venv/bin/activate  # or .\venv\Scripts\activate.bat
+  python manage.py runserver
+  ```
+
+- ```bash
+  # Frontend (separate terminal window/tab)
+  cd frontend && python -m http.server 8080
+  ```
 
 ### Database Changes
 
@@ -267,6 +270,14 @@ python manage.py test
 ```bash
 python manage.py createsuperuser
 ```
+
+## Branches
+
+- [**main**](https://github.com/HERALDEXX/url-shortener/tree/main) → stable, production-ready code. This branch is protected: only merge into `main` after changes are reviewed, tested, and approved.
+- [**dev**](https://github.com/HERALDEXX/url-shortener/tree/dev) (Default branch) → active development and beta features. Create feature branches off `dev` (e.g., `dev/feature/your-feature`) and open PRs against `dev`.
+
+> - **PR targeting:** Default PR target is `dev`. Only open a PR against `main` if the issue/PR explicitly says it should go straight to `main` (hotfixes or release merges).
+> - **Release process (summary):** When `dev` is stable and ready, open a release PR to merge `dev` into `main`. Tag releases and update changelog before merging to `main`.
 
 ## Deployment
 
@@ -310,7 +321,7 @@ CORS_ALLOWED_ORIGINS=https://your-domain.com
 **Database connection failed**
 
 - Confirm MySQL service is running
-- Check database exists: `CREATE DATABASE url_shortener;`
+- Check database exists: `CREATE DATABASE IF NOT EXISTS url_shortener;`
 - Verify user permissions
 
 **Frontend API calls failing**
@@ -321,11 +332,7 @@ CORS_ALLOWED_ORIGINS=https://your-domain.com
 
 ## Contributing
 
-1. Fork repository
-2. Create feature branch: `git checkout -b feature/name`
-3. Make changes and test: `python manage.py test`
-4. Commit: `git commit -m 'Add feature'`
-5. Push and create Pull Request
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## License
 
