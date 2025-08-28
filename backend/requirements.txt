@@ -1,0 +1,29 @@
+# Django URL Shortener Backend Dependencies
+
+# Django Framework
+Django==4.2.22
+djangorestframework==3.15.2
+
+# Database
+PyMySQL==1.1.1
+crytography==45.0.6
+
+# CORS handling for frontend integration
+django-cors-headers==4.3.1
+
+# Environment variables
+python-dotenv==1.0.0
+
+# URL validation
+validators==0.22.0
+
+# Development and utility packages
+django-extensions==3.2.3
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+
+# Production server (optional)
+gunicorn==23.0.0
+whitenoise==6.6.0
