@@ -2,17 +2,172 @@
 // Author: Frontend Developer
 // Description: Handles UI interactions and API communication
 
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) === name + "=") {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// --- Auth Helpers (no token check) ---
+
+async function loginAndStoreToken(username, password) {
+  const base = window.CONFIG?.API_URL?.replace(/\/+$/, "") || "/api";
+
+  try {
+    const resp = await fetch(`${base}/token/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || "Login failed");
+    }
+
+    const data = await resp.json();
+    // store token but UI won't care
+    localStorage.setItem("jwt_access", data.access);
+    localStorage.setItem("jwt_refresh", data.refresh);
+
+    const user = await fetchCurrentUser();
+    window.currentUser = user;
+    updateAuthUI(user);
+    return data;
+  } catch (err) {
+    throw new Error(err.message);
+  }
+}
+
+function logoutAndClearToken() {
+  localStorage.removeItem("jwt_access");
+  localStorage.removeItem("jwt_refresh");
+  window.currentUser = null;
+  updateAuthUI(null);
+}
+
+async function fetchCurrentUser() {
+  const base = window.CONFIG?.API_URL?.replace(/\/+$/, "") || "/api";
+  const token = localStorage.getItem("jwt_access"); // <-- ADD THIS
+
+  if (!token) return null; // nothing to do if not logged in
+
+  try {
+    const resp = await fetch(`${base}/me`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!resp.ok) {
+      if (resp.status === 401 || resp.status === 403) {
+        localStorage.removeItem("jwt_access");
+        localStorage.removeItem("jwt_refresh");
+      }
+      return null;
+    }
+
+    const data = await resp.json();
+    return data; // { id, username, is_staff, is_superuser }
+  } catch (err) {
+    console.warn("fetchCurrentUser failed:", err);
+    return null;
+  }
+}
+
+// --- UI Update (ignores token) ---
+function updateAuthUI(user = null) {
+  const authMsg = document.getElementById("authMsg");
+  const loginForm = document.getElementById("loginForm");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const adminBadge = document.getElementById("adminBadge");
+  const staffBadge = document.getElementById("staffBadge"); // <- new
+
+  if (!authMsg) return;
+
+  if (user && user.username) {
+    authMsg.textContent = `Signed in as ${user.username}`;
+    loginForm?.classList.add("hidden");
+    logoutBtn?.classList.remove("hidden");
+
+    // Admin badge
+    if (adminBadge) {
+      user.is_superuser
+        ? adminBadge.classList.remove("hidden")
+        : adminBadge.classList.add("hidden");
+    }
+
+    // Staff badge
+    if (staffBadge) {
+      user.is_staff
+        ? staffBadge.classList.remove("hidden")
+        : staffBadge.classList.add("hidden");
+    }
+  } else {
+    authMsg.textContent = "Not signed in";
+    loginForm?.classList.remove("hidden");
+    logoutBtn?.classList.add("hidden");
+    adminBadge?.classList.add("hidden");
+    staffBadge?.classList.add("hidden");
+  }
+}
+
+// --- Initialize Auth UI ---
+async function initAuthUI() {
+  if (window.CONFIG?.USE_MOCK) {
+    document.getElementById("authBlock")?.style.setProperty("display", "none");
+    return;
+  }
+
+  const user = await fetchCurrentUser();
+  window.currentUser = user;
+  updateAuthUI(user);
+
+  document
+    .getElementById("loginForm")
+    ?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const u = document.getElementById("loginUser").value;
+      const p = document.getElementById("loginPass").value;
+
+      try {
+        await loginAndStoreToken(u, p);
+      } catch (err) {
+        alert("Login failed: " + err.message);
+      }
+    });
+
+  document.getElementById("logoutBtn")?.addEventListener("click", () => {
+    logoutAndClearToken();
+  });
+}
+
 class URLShortener {
   constructor() {
-    // API Configuration - reads from environment or defaults
-    this.API_BASE_URL = this.getEnvVar(
-      "FRONTEND_API_BASE_URL",
-      "http://localhost:8000/api"
-    );
-    this.SHORT_URL_BASE = this.getEnvVar(
-      "FRONTEND_SHORT_URL_BASE",
-      "http://localhost:8000"
-    );
+    // Use config.js if present, otherwise fallback to env/defaults
+    const cfg = window.CONFIG;
+
+    this.API_BASE_URL = cfg.API_URL;
+    this.SHORT_URL_BASE = cfg.SHORT_URL_BASE;
+    this.isMock = !!cfg.USE_MOCK;
+
+    console.log("🔧 URLShortener constructor:");
+    console.log("  - CONFIG:", cfg);
+    console.log("  - API_BASE_URL:", this.API_BASE_URL);
+    console.log("  - SHORT_URL_BASE:", this.SHORT_URL_BASE);
+    console.log("  - isMock:", this.isMock);
 
     // DOM elements
     this.form = document.getElementById("shortenForm");
@@ -32,17 +187,6 @@ class URLShortener {
 
     this.initializeEventListeners();
     this.loadStatistics();
-  }
-
-  // Helper method to get environment variables or use defaults
-  getEnvVar(name, defaultValue) {
-    // In a real frontend build setup, you'd inject these at build time
-    // For now, using defaults for development
-    const envVars = {
-      FRONTEND_API_BASE_URL: "http://localhost:8000/api",
-      FRONTEND_SHORT_URL_BASE: "http://localhost:8000",
-    };
-    return envVars[name] || defaultValue;
   }
 
   initializeEventListeners() {
@@ -72,6 +216,10 @@ class URLShortener {
 
       const response = await this.shortenUrl(url);
       this.showResult(response);
+      // Add delay before refreshing stats in mock mode
+      if (this.isMock) {
+        await this.delay(200); // Give backend time to write file
+      }
       this.loadStatistics(); // Refresh stats
     } catch (error) {
       this.showError(
@@ -83,66 +231,206 @@ class URLShortener {
   }
 
   async shortenUrl(url) {
-    // TODO: Replace with actual API call when backend is ready
-    // For now, return mock data for frontend development
+    // Helper to build safe base URLs without double slashes
+    const safeJoin = (base, path) =>
+      `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 
-    if (this.API_BASE_URL === "http://localhost:8000") {
-      // Mock response for development
-      await this.delay(1500); // Simulate API delay
-      return {
-        shortCode: this.generateMockShortCode(),
-        originalUrl: url,
-        shortUrl: `${window.location.origin}/abc123`,
-      };
+    // 1) If mock mode: call backend shorten endpoint (which handles mock data)
+    if (this.isMock) {
+      console.log("✅ Mock mode - calling backend shorten endpoint");
+
+      try {
+        const response = await fetch(`http://localhost:8000/api/shorten`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ url }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            ...data,
+            shortUrl:
+              data.shortUrl || `${window.location.origin}/${data.shortCode}`,
+          };
+        } else {
+          throw new Error("Backend shorten failed");
+        }
+      } catch (error) {
+        console.error("Error shortening URL in mock mode:", error);
+        throw new Error("Failed to shorten URL");
+      }
     }
 
-    // Real API call (uncomment when backend is ready)
-    /*
-      const response = await fetch(`${this.API_BASE_URL}/shorten`, {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url: url })
+    // 2) If not mock: try the real backend first
+    try {
+      const resp = await fetch(safeJoin(this.API_BASE_URL, "shorten"), {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({ url }),
       });
 
-      if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Server error');
-      }
-
-      const data = await response.json();
-      return {
+      if (resp.ok) {
+        const data = await resp.json();
+        // prefer backend-provided shortUrl if present
+        return {
           ...data,
-          shortUrl: `${this.SHORT_URL_BASE}/${data.shortCode}`
-      };
-      */
+          shortUrl:
+            data.shortUrl ||
+            `${this.SHORT_URL_BASE.replace(/\/+$/, "")}/${data.shortCode}`,
+        };
+      } else {
+        // treat non-ok as a failure so we fall back below
+        console.warn(
+          "Backend responded with non-ok status for shortenUrl:",
+          resp.status
+        );
+        throw new Error("Backend returned non-ok status");
+      }
+    } catch (backendErr) {
+      console.warn(
+        "Backend shortenUrl failed, falling back to mock-data.json:",
+        backendErr
+      );
+      // fall-through to try mock JSON next
+    }
+
+    // 3) Try mock-data.json (or whatever this.API_BASE_URL points to if it's a JSON path)
+    const mockPath =
+      typeof this.API_BASE_URL === "string" &&
+      this.API_BASE_URL.endsWith(".json")
+        ? this.API_BASE_URL
+        : "mock-data.json";
+
+    try {
+      // small delay to simulate latency (keeps UX consistent)
+      await this.delay(400);
+      const res = await fetch(mockPath);
+      if (res.ok) {
+        const data = await res.json();
+        // pick sensible fields if present; otherwise fall back to generated code
+        const code =
+          data && (data.shortCode || data.code)
+            ? data.shortCode || data.code
+            : this.generateMockShortCode();
+        return {
+          shortCode: code,
+          originalUrl: url,
+          shortUrl:
+            data && data.shortUrl
+              ? data.shortUrl
+              : `${window.location.origin}/${code}`,
+        };
+      } else {
+        console.warn(
+          "mock-data.json returned non-ok status for shortenUrl:",
+          res.status
+        );
+        throw new Error("mock-data.json non-ok");
+      }
+    } catch (mockErr) {
+      console.warn(
+        "mock-data.json unavailable or invalid for shortenUrl, using generated mock:",
+        mockErr
+      );
+    }
+
+    // 4) Last resort: generated mock
+    await this.delay(300);
+    const code = this.generateMockShortCode();
+    return {
+      shortCode: code,
+      originalUrl: url,
+      shortUrl: `${window.location.origin}/${code}`,
+    };
   }
 
   async loadStatistics() {
     try {
       this.showStatsLoading(true);
 
-      // TODO: Replace with actual API call when backend is ready
-      if (this.API_BASE_URL === "http://localhost:8000") {
-        // Mock data for development
-        await this.delay(800);
-        const mockStats = this.generateMockStats();
-        this.displayStatistics(mockStats);
-        return;
+      // Helper to normalize the data we receive
+      const normalizeStats = (data) => {
+        if (!data) return null;
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data.stats)) return data.stats;
+        // If object with numeric keys, convert to array
+        if (typeof data === "object") {
+          const arr = Object.values(data).filter((v) => v && v.shortCode);
+          if (arr.length) return arr;
+        }
+        return null;
+      };
+
+      // 1) If not mock: try real backend first
+      if (!this.isMock) {
+        try {
+          const resp = await fetch(
+            `${this.API_BASE_URL.replace(/\/+$/, "")}/stats`
+          );
+          if (resp.ok) {
+            const data = await resp.json();
+            const stats = normalizeStats(data);
+            if (stats && stats.length > 0) {
+              this.displayStatistics(stats);
+              return;
+            } else {
+              console.warn(
+                "Backend stats returned empty or unexpected shape, will try mock-data.json"
+              );
+              // fall through to mock
+            }
+          } else {
+            console.warn("Backend responded non-ok for stats:", resp.status);
+            throw new Error("Backend non-ok");
+          }
+        } catch (backendErr) {
+          console.warn(
+            "Backend stats fetch failed, falling back to mock-data.json:",
+            backendErr
+          );
+          // fall through to mock
+        }
       }
 
-      // Real API call (uncomment when backend is ready)
-      /*
-          const response = await fetch(`${this.API_BASE_URL}/stats`);
-          
-          if (!response.ok) {
-              throw new Error('Failed to load statistics');
+      // 2) Try mock-data.json (when in mock mode or backend failed)
+      try {
+        const cacheBuster = this.isMock ? `?t=${Date.now()}` : "";
+        const res = await fetch(`mock-data.json${cacheBuster}`);
+        if (res.ok) {
+          const data = await res.json();
+          const stats = normalizeStats(data);
+          if (stats && stats.length > 0) {
+            this.displayStatistics(stats);
+            return;
+          } else {
+            console.warn(
+              "mock-data.json contained no usable stats, will fall back to generated mock"
+            );
           }
-          
-          const stats = await response.json();
-          this.displayStatistics(stats);
-          */
+        } else {
+          console.warn(
+            "mock-data.json responded non-ok for stats:",
+            res.status
+          );
+        }
+      } catch (mockErr) {
+        console.warn(
+          "Failed to fetch or parse mock-data.json for stats:",
+          mockErr
+        );
+      }
+
+      // 3) Last resort: generated mock stats
+      await this.delay(300);
+      const mockStats = this.generateMockStats();
+      this.displayStatistics(mockStats);
     } catch (error) {
       console.error("Error loading statistics:", error);
       this.showEmptyStats();
@@ -191,6 +479,10 @@ class URLShortener {
                       class="text-blue-600 hover:text-blue-800 text-xs font-medium">
                   Copy Link
               </button>
+              <button onclick="urlShortener.deleteUrl('${stat.shortCode}', this)"
+                    class="text-red-600 hover:text-red-800 text-xs font-medium">
+                Delete
+            </button>
           </td>
       `;
 
@@ -226,14 +518,76 @@ class URLShortener {
     }
   }
 
-  // UI Helper Methods
-  showLoading(show) {
-    if (show) {
-      this.loading.classList.remove("hidden");
-      this.shortenBtn.disabled = true;
-    } else {
-      this.loading.classList.add("hidden");
-      this.shortenBtn.disabled = false;
+  async deleteUrl(shortCode, btn) {
+    console.log("🗑️ deleteUrl called:");
+    console.log("  - shortCode:", shortCode);
+    console.log("  - isMock:", this.isMock);
+    console.log("  - API_BASE_URL:", this.API_BASE_URL);
+
+    if (this.isMock) {
+      console.log("✅ Mock mode - calling backend delete endpoint");
+
+      // In mock mode, call the backend delete endpoint (which handles mock data)
+      try {
+        const response = await fetch(
+          `http://localhost:8000/api/urls/${shortCode}/`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.ok) {
+          btn.closest("tr").remove();
+          this.showToast(`Deleted ${shortCode} (mock mode)`);
+
+          // Add delay before refreshing stats in mock mode
+          await this.delay(200); // Give backend time to write file
+
+          // Refresh stats to show updated data
+          this.loadStatistics();
+        } else {
+          this.showToast("Failed to delete URL");
+        }
+      } catch (error) {
+        console.error("Error deleting from mock data:", error);
+        this.showToast("Error deleting URL");
+      }
+      return;
+    }
+
+    console.log("🔐 Real mode - checking authentication");
+    try {
+      const token = localStorage.getItem("jwt_access");
+      if (!token) {
+        this.showToast("You must be logged in to delete a link.");
+        return;
+      }
+
+      const resp = await fetch(
+        `${this.API_BASE_URL.replace(/\/+$/, "")}/urls/${shortCode}/`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (resp.ok) {
+        btn.closest("tr").remove();
+        this.showToast(`Deleted ${shortCode}`);
+      } else {
+        const err = await resp.json().catch(() => ({}));
+        const msg = err.detail || err.error || "Failed to delete URL.";
+        this.showToast(msg);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast("Error deleting URL.");
     }
   }
 
@@ -244,6 +598,16 @@ class URLShortener {
       this.statsTable.classList.add("hidden");
     } else {
       this.statsLoading.classList.add("hidden");
+    }
+  }
+
+  showLoading(show) {
+    if (show) {
+      this.loading.classList.remove("hidden");
+      this.shortenBtn.disabled = true;
+    } else {
+      this.loading.classList.add("hidden");
+      this.shortenBtn.disabled = false;
     }
   }
 
@@ -344,12 +708,44 @@ class URLShortener {
   }
 }
 
-// Initialize the application when DOM is loaded
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  // Wait for config to be properly fetched from backend
+  // The initial CONFIG has USE_MOCK: false, so we wait until it's been updated
+  let attempts = 0;
+  const maxAttempts = 50; // 5 seconds max wait
+
+  while (attempts < maxAttempts) {
+    // Check if config has been fetched from backend (API_URL will be different from default)
+    if (
+      window.CONFIG &&
+      window.CONFIG.API_URL !== "http://localhost:8000/api/"
+    ) {
+      console.log("✅ Config properly fetched from backend:", window.CONFIG);
+      break;
+    }
+
+    console.log(
+      `⏳ Waiting for config... (attempt ${attempts + 1}/${maxAttempts})`
+    );
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    attempts++;
+  }
+
+  if (attempts >= maxAttempts) {
+    console.warn("⚠️ Config fetch timeout, using default config");
+  }
+
+  // Initialize auth and URLShortener
+  try {
+    await initAuthUI();
+  } catch (e) {
+    console.warn("Auth UI init skipped or failed:", e);
+  }
+
   window.urlShortener = new URLShortener();
 });
 
 // Export for module systems (if needed)
-if (typeof module !== "undefined" && module.exports) {
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
   module.exports = URLShortener;
 }

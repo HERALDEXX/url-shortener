@@ -1,0 +1,27 @@
+[
+  {
+    "shortCode": "abc123",
+    "originalUrl": "https://example.com/long-article-about-stuff",
+    "clickCount": 13
+  },
+  {
+    "shortCode": "ghi789",
+    "originalUrl": "https://blog.example.org/post/12345",
+    "clickCount": 3
+  },
+  {
+    "shortCode": "jkl012",
+    "originalUrl": "https://github.com/user/repo",
+    "clickCount": 28
+  },
+  {
+    "shortCode": "mno345",
+    "originalUrl": "https://stackoverflow.com/questions/12345678",
+    "clickCount": 7
+  },
+  {
+    "shortCode": "mRrT9K",
+    "originalUrl": "https://o2tvseries4u.com/Danger-Force/index.html",
+    "clickCount": 0
+  }
+]
