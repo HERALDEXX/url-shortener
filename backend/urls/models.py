@@ -3,7 +3,9 @@
 Django models for URL Shortener
 """
 
+from django.conf import settings
 from django.db import models
+from django.db.models import F
 from django.utils import timezone
 import string
 import random
@@ -17,6 +19,13 @@ class URLModel(models.Model):
     click_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='urls',
+    )
 
     class Meta:
         db_table = 'urls'
@@ -50,8 +59,15 @@ class URLModel(models.Model):
 
     def increment_click_count(self):
         """
-        Increment click count atomically
+        Atomically increment click_count using a queryset update to avoid race conditions,
+        then refresh the instance from the database so `self.click_count` is up-to-date.
         """
-        self.click_count = models.F('click_count') + 1
-        self.save(update_fields=['click_count'])
-        self.refresh_from_db()
+        # Perform atomic increment at DB level
+        type(self).objects.filter(pk=self.pk).update(click_count=F('click_count') + 1)
+
+        # Refresh only the click_count field for this instance
+        try:
+            self.refresh_from_db(fields=['click_count'])
+        except Exception:
+            # Fallback to full refresh if fields param not supported (depends on Django version)
+            self.refresh_from_db()
