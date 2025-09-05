@@ -132,17 +132,23 @@ Open your terminal and run the following command to create the database (replace
 mysql -u <your_mysql_user> -p -e "CREATE DATABASE IF NOT EXISTS url_shortener CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
 
-### **Step 6: Create Django Admin User (Superuser)**
+### **Step 6: Create Django Admin User (Superuser) - Database Mode Only**
 
-To access the Django admin panel, you must create a superuser account if you haven't already:
+To access the Django admin panel in **database mode** (`USE_MOCK=false`), you must create a superuser account:
 
-- Run migrations first:
+> **⚠️ Note:** Skip this step entirely if:
+> - Using mock mode (`USE_MOCK=true`) - no superuser needed or possible in mock mode
+> - MySQL setup failed - fix database connection first before creating superuser
+
+#### **For Database Mode (MySQL working):**
+
+1. Run migrations first:
 
 ```bash
 python manage.py migrate
 ```
 
-- Then:
+2. Create the superuser:
 
 ```bash
 python manage.py createsuperuser
