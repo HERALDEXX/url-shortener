@@ -28,12 +28,11 @@ A full-stack web application that allows users to shorten long URLs, track click
 - **URL Shortening**: Convert long URLs into short, shareable links
 - **Click Tracking**: Monitor access counts for each shortened URL
 - **Analytics Dashboard**: View statistics for all created URLs
-- **User Authentication**: JWT-based authentication for URL management (real database mode)
+- **User Authentication**: JWT-based authentication for URL management
 - **Admin Interface**: Django admin panel for user management and backend administration
 - **Mobile-Friendly**: Responsive design for all devices
 - **Copy to Clipboard**: One-click sharing functionality
 - **RESTful API**: Clean API endpoints for integration
-- **Mock Mode**: Test without database setup using JSON file storage
 
 ## Tech Stack
 
@@ -87,14 +86,8 @@ source venv/Scripts/activate
 
 ```bash
 pip install -r requirements.txt
-```
+cd ..  # Go back to root directory for shared .env
 
-```bash
-# Go back to root directory for shared .env
-cd ..
-```
-
-```bash
 # Windows
 copy .env.example .env
 ```
@@ -116,31 +109,21 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 
 > Edit `.env` file (in root directory) and replace `SECRET_KEY` value with the generated key
 
-### **Step 4.1: Set up MySQL database**
-
-Before you fill in the database values in your `.env` file, make sure MySQL is installed and running on your system. By default, the MySQL username is `root` unless you have set up a different user. You can use `root` for local development, or create a new user and database if you prefer.
+### **Step 5: Set up MySQL database**
 
 Edit `.env` file (in root directory) and replace `DATABASE_PASSWORD` value with your MySQL password.
 
-> If your MySQL setup fails, ignore current step [(4.1)](#step-41-set-up-mysql-database) and [Step 5](#step-5-create-the-database-in-mysql) and come back to it later.
+### **Step 6: Create the database in MySQL**
 
-### **Step 5: Create the database in MySQL**
-
-Open your terminal and run the following command to create the database (replace <your_mysql_user> with your MySQL username):
+Open your terminal and run the following command to create the database:
 
 ```bash
-mysql -u <your_mysql_user> -p -e "CREATE DATABASE IF NOT EXISTS url_shortener CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS url_shortener CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
 
-### **Step 6: Create Django Admin User (Superuser) - Database Mode Only**
+### **Step 7: Create Django Admin User (Superuser)**
 
-To access the Django admin panel in **database mode** (`USE_MOCK=false`), you must create a superuser account:
-
-> **⚠️ Note:** Skip this step entirely if:
-> - Using mock mode (`USE_MOCK=true`) - no superuser needed or possible in mock mode
-> - MySQL setup failed - fix database connection first before creating superuser
-
-#### **For Database Mode (MySQL working):**
+To access the Django admin panel, you must create a superuser account:
 
 1. Run migrations first:
 
@@ -156,42 +139,16 @@ python manage.py createsuperuser
 
 Follow the prompts to set a username, email, and password. Use these credentials to log in at http://localhost:8000/admin/ when backend server is running.
 
-> **Note:** For your own reference, you may add your Django superuser username and email to your `.env` file as DJANGO_SUPERUSER_USERNAME and DJANGO_SUPERUSER_EMAIL. **Never store your superuser password in the `.env` file.** Use a secure password manager to keep your password safe.
-
-### **Step 7: Mock Database Configuration**
-
-The application supports two modes for data handling: mock data mode and real database mode. This is controlled by the `USE_MOCK` setting in your `.env` file.
-
-**Modes:**
-
-- `USE_MOCK=true` → Frontend fetches mock data from [`frontend/mock-data.json`](frontend/mock-data.json). Backend reflects any changes into mock database.
-- `USE_MOCK=false` (**default**) → Frontend fetches real backend data from the Django API [(`http://localhost:8000/api`)](http://localhost:8000/api). Backend reflects any changes into real database (MySQL).
-
-**Configure in your `.env` file:**
-
-```env
-USE_MOCK=false
-```
-
-> **✅ AUTOMATIC CONFIGURATION:** The frontend automatically fetches the `USE_MOCK` value from the backend's `/api/config/` endpoint, ensuring both frontend and backend always use the same mock setting. No manual configuration needed!
-
-> **Mock Database Mode:** If MySQL setup failed or you want to run without a database, set `USE_MOCK=true` in your `.env` file. The frontend will automatically detect this and switch to mock mode, using `frontend/mock-data.json` for data storage. Authentication is disabled in this mode.
-
-> **Real Database Mode:** For production use or testing with persistent data, keep `USE_MOCK=false`. Users must be created through the admin dashboard at [`http://localhost:8000/admin/`](http://localhost:8000/admin/) and log in through the frontend to manage URLs.
-
 ### **Step 8: Make Migrations**
 
 > From `backend` directory and with virtual environment activated:
 
 ```bash
 python manage.py makemigrations
-```
-
-```bash
 python manage.py migrate
 ```
 
-### **Step 8.1: Collect Static Files (for production)**
+### **Step 9: Collect Static Files (for production)**
 
 > When `DEBUG=False` (default) in your `.env` file, run the following command to gather all static files into the directory specified by `STATIC_ROOT`:
 
@@ -199,15 +156,13 @@ python manage.py migrate
 python manage.py collectstatic
 ```
 
-> This ensures your static assets are served correctly in production.
-
-### **Step 9: Run backend server**
+### **Step 10: Run backend server**
 
 ```bash
 python manage.py runserver
 ```
 
-### **Step 10: Serve frontend (new terminal)**
+### **Step 11: Serve frontend (new terminal)**
 
 > Open a separate terminal window/tab
 
@@ -215,9 +170,6 @@ python manage.py runserver
 
 ```bash
 cd frontend
-```
-
-```bash
 python -m http.server 8080
 ```
 
@@ -233,11 +185,9 @@ python -m http.server 8080
 
 ## Authentication & User Management
 
-### Real Database Mode (`USE_MOCK=false`)
-
 **Authentication is required for URL management operations** including deleting URLs and accessing user-specific features.
 
-#### Creating User Accounts
+### Creating User Accounts
 
 User accounts must be created through the Django admin dashboard:
 
@@ -256,7 +206,7 @@ User accounts must be created through the Django admin dashboard:
    - Set username and password
    - Optionally assign staff/admin permissions
 
-#### Frontend Authentication
+### Frontend Authentication
 
 Users can then log in through the frontend interface:
 
@@ -265,10 +215,6 @@ Users can then log in through the frontend interface:
 - Only authenticated users can delete URLs they own
 - Staff users can delete any URL
 
-### Mock Database Mode (`USE_MOCK=true`)
-
-Authentication is bypassed in mock mode for testing convenience. All operations work without login requirements.
-
 ## Project Structure
 
 ```
@@ -276,7 +222,6 @@ url-shortener/
 ├── frontend/
 │   ├── index.html
 │   ├── config.js               # Configuration management
-│   ├── mock-data.json          # Mock database for testing
 │   ├── css/styles.css
 │   └── js/app.js
 ├── backend/
@@ -287,7 +232,7 @@ url-shortener/
 │   └── venv/
 ├── database/schema.sql      # Reference schema
 ├── .env                     # Shared environment file (not in git)
-├── .env.example             # Environment template (shared by both frontend/backend)
+├── .env.example             # Environment template
 └── README.md
 ```
 
@@ -302,9 +247,9 @@ See [docs/API_CONTRACT.md](docs/API_CONTRACT.md) for full API specification deta
 - `POST /api/shorten` - Create shortened URL
 - `GET /api/stats` - Get URL statistics
 - `GET /{shortCode}` - Redirect to original URL
-- `DELETE /api/urls/{shortCode}/` - Delete URL (auth required in real mode)
+- `DELETE /api/urls/{shortCode}/` - Delete URL (auth required)
 
-**Authentication (Real Database Mode):**
+**Authentication:**
 
 - `POST /api/token/` - Login and get JWT tokens
 - `GET /api/me` - Get current user info
@@ -312,7 +257,6 @@ See [docs/API_CONTRACT.md](docs/API_CONTRACT.md) for full API specification deta
 **System:**
 
 - `GET /api/health` - Health check
-- `GET /api/config/` - Get current mode (mock/real)
 
 ### Example Usage
 
@@ -321,15 +265,11 @@ See [docs/API_CONTRACT.md](docs/API_CONTRACT.md) for full API specification deta
 curl -X POST http://localhost:8000/api/shorten \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com/long-url"}'
-```
 
-```bash
 # Get statistics
 curl http://localhost:8000/api/stats
-```
 
-```bash
-# Login (real mode)
+# Login
 curl -X POST http://localhost:8000/api/token/ \
   -H "Content-Type: application/json" \
   -d '{"username": "your_user", "password": "your_pass"}'
@@ -339,34 +279,35 @@ curl -X POST http://localhost:8000/api/token/ \
 
 ### Daily Workflow
 
-- ```bash
-  git pull origin dev
-  ```
+```bash
+git pull origin dev
+```
 
-- Make your changes...
+Make your changes...
 
 > Backend:
 
-- ```bash
-  # Windows
-  cd backend && .\venv\Scripts\activate.bat
-  ```
+```bash
+# Windows
+cd backend && .\venv\Scripts\activate.bat
+```
 
-- ```bash
-  # macOS/Linux
-  cd backend && source venv/bin/activate
-  ```
+```bash
+# macOS/Linux
+cd backend && source venv/bin/activate
+```
 
-- ```bash
-  python manage.py makemigrations
-  python manage.py migrate
-  ```
+```bash
+python manage.py makemigrations
+python manage.py migrate
+python manage.py runserver
+```
 
 > Frontend (**Open separate terminal window/tab**)
 
-- ```bash
-  cd frontend && python -m http.server 8080
-  ```
+```bash
+cd frontend && python -m http.server 8080
+```
 
 ### Database Changes
 
@@ -391,9 +332,6 @@ python manage.py createsuperuser
 
 - [**main**](https://github.com/HERALDEXX/url-shortener/tree/main) → stable, production-ready code. This branch is protected: only merge into `main` after changes are reviewed, tested, and approved.
 - [**dev**](https://github.com/HERALDEXX/url-shortener/tree/dev) (Default branch) → active development and beta features. Create feature branches off `dev` (e.g., `dev/feature/your-feature`) and open PRs against `dev`.
-
-> - **PR targeting:** Default PR target is `dev`. Only open a PR against `main` if the issue/PR explicitly says it should go straight to `main` (hotfixes or release merges).
-> - **Release process (summary):** When `dev` is stable and ready, open a release PR to merge `dev` into `main`. Tag releases and update changelog before merging to `main`.
 
 ## Deployment
 
@@ -443,8 +381,7 @@ CORS_ALLOWED_ORIGINS=https://your-domain.com
 **Frontend API calls failing**
 
 - Confirm backend is running on correct port
-- Check `API_BASE_URL` in `js/app.js`
-- Inspect browser Network tab for errors
+- Check browser Network tab for errors
 
 ## Contributing
 

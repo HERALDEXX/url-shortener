@@ -1,5 +1,4 @@
 // URL Shortener Frontend Application
-// Author: Frontend Developer
 // Description: Handles UI interactions and API communication
 
 function getCookie(name) {
@@ -8,7 +7,6 @@ function getCookie(name) {
     const cookies = document.cookie.split(";");
     for (let i = 0; i < cookies.length; i++) {
       const cookie = cookies[i].trim();
-      // Does this cookie string begin with the name we want?
       if (cookie.substring(0, name.length + 1) === name + "=") {
         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
         break;
@@ -18,8 +16,7 @@ function getCookie(name) {
   return cookieValue;
 }
 
-// --- Auth Helpers (no token check) ---
-
+// --- Auth Helpers ---
 async function loginAndStoreToken(username, password) {
   const base = window.CONFIG?.API_URL?.replace(/\/+$/, "") || "/api";
 
@@ -36,7 +33,6 @@ async function loginAndStoreToken(username, password) {
     }
 
     const data = await resp.json();
-    // store token but UI won't care
     localStorage.setItem("jwt_access", data.access);
     localStorage.setItem("jwt_refresh", data.refresh);
 
@@ -58,9 +54,9 @@ function logoutAndClearToken() {
 
 async function fetchCurrentUser() {
   const base = window.CONFIG?.API_URL?.replace(/\/+$/, "") || "/api";
-  const token = localStorage.getItem("jwt_access"); // <-- ADD THIS
+  const token = localStorage.getItem("jwt_access");
 
-  if (!token) return null; // nothing to do if not logged in
+  if (!token) return null;
 
   try {
     const resp = await fetch(`${base}/me`, {
@@ -80,20 +76,20 @@ async function fetchCurrentUser() {
     }
 
     const data = await resp.json();
-    return data; // { id, username, is_staff, is_superuser }
+    return data;
   } catch (err) {
     console.warn("fetchCurrentUser failed:", err);
     return null;
   }
 }
 
-// --- UI Update (ignores token) ---
+// --- UI Update ---
 function updateAuthUI(user = null) {
   const authMsg = document.getElementById("authMsg");
   const loginForm = document.getElementById("loginForm");
   const logoutBtn = document.getElementById("logoutBtn");
   const adminBadge = document.getElementById("adminBadge");
-  const staffBadge = document.getElementById("staffBadge"); // <- new
+  const staffBadge = document.getElementById("staffBadge");
 
   if (!authMsg) return;
 
@@ -102,14 +98,12 @@ function updateAuthUI(user = null) {
     loginForm?.classList.add("hidden");
     logoutBtn?.classList.remove("hidden");
 
-    // Admin badge
     if (adminBadge) {
       user.is_superuser
         ? adminBadge.classList.remove("hidden")
         : adminBadge.classList.add("hidden");
     }
 
-    // Staff badge
     if (staffBadge) {
       user.is_staff
         ? staffBadge.classList.remove("hidden")
@@ -126,11 +120,6 @@ function updateAuthUI(user = null) {
 
 // --- Initialize Auth UI ---
 async function initAuthUI() {
-  if (window.CONFIG?.USE_MOCK) {
-    document.getElementById("authBlock")?.style.setProperty("display", "none");
-    return;
-  }
-
   const user = await fetchCurrentUser();
   window.currentUser = user;
   updateAuthUI(user);
@@ -156,18 +145,15 @@ async function initAuthUI() {
 
 class URLShortener {
   constructor() {
-    // Use config.js if present, otherwise fallback to env/defaults
     const cfg = window.CONFIG;
 
     this.API_BASE_URL = cfg.API_URL;
     this.SHORT_URL_BASE = cfg.SHORT_URL_BASE;
-    this.isMock = !!cfg.USE_MOCK;
 
     console.log("🔧 URLShortener constructor:");
     console.log("  - CONFIG:", cfg);
     console.log("  - API_BASE_URL:", this.API_BASE_URL);
     console.log("  - SHORT_URL_BASE:", this.SHORT_URL_BASE);
-    console.log("  - isMock:", this.isMock);
 
     // DOM elements
     this.form = document.getElementById("shortenForm");
@@ -190,13 +176,8 @@ class URLShortener {
   }
 
   initializeEventListeners() {
-    // Form submission
     this.form.addEventListener("submit", (e) => this.handleFormSubmit(e));
-
-    // Copy button
     this.copyBtn.addEventListener("click", () => this.copyToClipboard());
-
-    // Input validation
     this.urlInput.addEventListener("input", () => this.validateUrl());
   }
 
@@ -216,10 +197,6 @@ class URLShortener {
 
       const response = await this.shortenUrl(url);
       this.showResult(response);
-      // Add delay before refreshing stats in mock mode
-      if (this.isMock) {
-        await this.delay(200); // Give backend time to write file
-      }
       this.loadStatistics(); // Refresh stats
     } catch (error) {
       this.showError(
@@ -231,40 +208,9 @@ class URLShortener {
   }
 
   async shortenUrl(url) {
-    // Helper to build safe base URLs without double slashes
     const safeJoin = (base, path) =>
       `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 
-    // 1) If mock mode: call backend shorten endpoint (which handles mock data)
-    if (this.isMock) {
-      console.log("✅ Mock mode - calling backend shorten endpoint");
-
-      try {
-        const response = await fetch(`http://localhost:8000/api/shorten`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ url }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          return {
-            ...data,
-            shortUrl:
-              data.shortUrl || `${window.location.origin}/${data.shortCode}`,
-          };
-        } else {
-          throw new Error("Backend shorten failed");
-        }
-      } catch (error) {
-        console.error("Error shortening URL in mock mode:", error);
-        throw new Error("Failed to shorten URL");
-      }
-    }
-
-    // 2) If not mock: try the real backend first
     try {
       const resp = await fetch(safeJoin(this.API_BASE_URL, "shorten"), {
         method: "POST",
@@ -276,161 +222,42 @@ class URLShortener {
         body: JSON.stringify({ url }),
       });
 
-      if (resp.ok) {
-        const data = await resp.json();
-        // prefer backend-provided shortUrl if present
-        return {
-          ...data,
-          shortUrl:
-            data.shortUrl ||
-            `${this.SHORT_URL_BASE.replace(/\/+$/, "")}/${data.shortCode}`,
-        };
-      } else {
-        // treat non-ok as a failure so we fall back below
-        console.warn(
-          "Backend responded with non-ok status for shortenUrl:",
-          resp.status
-        );
-        throw new Error("Backend returned non-ok status");
+      if (!resp.ok) {
+        throw new Error("Failed to shorten URL");
       }
-    } catch (backendErr) {
-      console.warn(
-        "Backend shortenUrl failed, falling back to mock-data.json:",
-        backendErr
-      );
-      // fall-through to try mock JSON next
+
+      const data = await resp.json();
+      return {
+        ...data,
+        shortUrl:
+          data.shortUrl ||
+          `${this.SHORT_URL_BASE.replace(/\/+$/, "")}/${data.shortCode}`,
+      };
+    } catch (error) {
+      console.error("Error shortening URL:", error);
+      throw new Error("Failed to shorten URL");
     }
-
-    // 3) Try mock-data.json (or whatever this.API_BASE_URL points to if it's a JSON path)
-    const mockPath =
-      typeof this.API_BASE_URL === "string" &&
-      this.API_BASE_URL.endsWith(".json")
-        ? this.API_BASE_URL
-        : "mock-data.json";
-
-    try {
-      // small delay to simulate latency (keeps UX consistent)
-      await this.delay(400);
-      const res = await fetch(mockPath);
-      if (res.ok) {
-        const data = await res.json();
-        // pick sensible fields if present; otherwise fall back to generated code
-        const code =
-          data && (data.shortCode || data.code)
-            ? data.shortCode || data.code
-            : this.generateMockShortCode();
-        return {
-          shortCode: code,
-          originalUrl: url,
-          shortUrl:
-            data && data.shortUrl
-              ? data.shortUrl
-              : `${window.location.origin}/${code}`,
-        };
-      } else {
-        console.warn(
-          "mock-data.json returned non-ok status for shortenUrl:",
-          res.status
-        );
-        throw new Error("mock-data.json non-ok");
-      }
-    } catch (mockErr) {
-      console.warn(
-        "mock-data.json unavailable or invalid for shortenUrl, using generated mock:",
-        mockErr
-      );
-    }
-
-    // 4) Last resort: generated mock
-    await this.delay(300);
-    const code = this.generateMockShortCode();
-    return {
-      shortCode: code,
-      originalUrl: url,
-      shortUrl: `${window.location.origin}/${code}`,
-    };
   }
 
   async loadStatistics() {
     try {
       this.showStatsLoading(true);
 
-      // Helper to normalize the data we receive
-      const normalizeStats = (data) => {
-        if (!data) return null;
-        if (Array.isArray(data)) return data;
-        if (Array.isArray(data.stats)) return data.stats;
-        // If object with numeric keys, convert to array
-        if (typeof data === "object") {
-          const arr = Object.values(data).filter((v) => v && v.shortCode);
-          if (arr.length) return arr;
-        }
-        return null;
-      };
+      const resp = await fetch(
+        `${this.API_BASE_URL.replace(/\/+$/, "")}/stats`
+      );
 
-      // 1) If not mock: try real backend first
-      if (!this.isMock) {
-        try {
-          const resp = await fetch(
-            `${this.API_BASE_URL.replace(/\/+$/, "")}/stats`
-          );
-          if (resp.ok) {
-            const data = await resp.json();
-            const stats = normalizeStats(data);
-            if (stats && stats.length > 0) {
-              this.displayStatistics(stats);
-              return;
-            } else {
-              console.warn(
-                "Backend stats returned empty or unexpected shape, will try mock-data.json"
-              );
-              // fall through to mock
-            }
-          } else {
-            console.warn("Backend responded non-ok for stats:", resp.status);
-            throw new Error("Backend non-ok");
-          }
-        } catch (backendErr) {
-          console.warn(
-            "Backend stats fetch failed, falling back to mock-data.json:",
-            backendErr
-          );
-          // fall through to mock
-        }
+      if (!resp.ok) {
+        throw new Error("Failed to fetch stats");
       }
 
-      // 2) Try mock-data.json (when in mock mode or backend failed)
-      try {
-        const cacheBuster = this.isMock ? `?t=${Date.now()}` : "";
-        const res = await fetch(`mock-data.json${cacheBuster}`);
-        if (res.ok) {
-          const data = await res.json();
-          const stats = normalizeStats(data);
-          if (stats && stats.length > 0) {
-            this.displayStatistics(stats);
-            return;
-          } else {
-            console.warn(
-              "mock-data.json contained no usable stats, will fall back to generated mock"
-            );
-          }
-        } else {
-          console.warn(
-            "mock-data.json responded non-ok for stats:",
-            res.status
-          );
-        }
-      } catch (mockErr) {
-        console.warn(
-          "Failed to fetch or parse mock-data.json for stats:",
-          mockErr
-        );
-      }
+      const data = await resp.json();
 
-      // 3) Last resort: generated mock stats
-      await this.delay(300);
-      const mockStats = this.generateMockStats();
-      this.displayStatistics(mockStats);
+      if (data && data.length > 0) {
+        this.displayStatistics(data);
+      } else {
+        this.showEmptyStats();
+      }
     } catch (error) {
       console.error("Error loading statistics:", error);
       this.showEmptyStats();
@@ -461,30 +288,30 @@ class URLShortener {
     row.className = "hover:bg-gray-50";
 
     row.innerHTML = `
-          <td class="px-4 py-3 text-sm text-gray-900">
-              <code class="bg-gray-100 px-2 py-1 rounded">${stat.shortCode}</code>
-          </td>
-          <td class="px-4 py-3 text-sm text-gray-600">
-              <a href="${stat.originalUrl}" target="_blank" class="text-blue-600 hover:text-blue-800 truncate block max-w-xs">
-                  ${stat.originalUrl}
-              </a>
-          </td>
-          <td class="px-4 py-3 text-sm text-gray-900">
-              <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                  ${stat.clickCount} clicks
-              </span>
-          </td>
-          <td class="px-4 py-3 text-sm">
-              <button onclick="urlShortener.copyShortUrl('${stat.shortCode}')" 
-                      class="text-blue-600 hover:text-blue-800 text-xs font-medium">
-                  Copy Link
-              </button>
-              <button onclick="urlShortener.deleteUrl('${stat.shortCode}', this)"
-                    class="text-red-600 hover:text-red-800 text-xs font-medium">
-                Delete
-            </button>
-          </td>
-      `;
+      <td class="px-4 py-3 text-sm text-gray-900">
+          <code class="bg-gray-100 px-2 py-1 rounded">${stat.shortCode}</code>
+      </td>
+      <td class="px-4 py-3 text-sm text-gray-600">
+          <a href="${stat.originalUrl}" target="_blank" class="text-blue-600 hover:text-blue-800 truncate block max-w-xs">
+              ${stat.originalUrl}
+          </a>
+      </td>
+      <td class="px-4 py-3 text-sm text-gray-900">
+          <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+              ${stat.clickCount} clicks
+          </span>
+      </td>
+      <td class="px-4 py-3 text-sm">
+          <button onclick="urlShortener.copyShortUrl('${stat.shortCode}')" 
+                  class="text-blue-600 hover:text-blue-800 text-xs font-medium mr-2">
+              Copy Link
+          </button>
+          <button onclick="urlShortener.deleteUrl('${stat.shortCode}', this)"
+                class="text-red-600 hover:text-red-800 text-xs font-medium">
+            Delete
+        </button>
+      </td>
+    `;
 
     return row;
   }
@@ -503,7 +330,6 @@ class URLShortener {
     try {
       await navigator.clipboard.writeText(this.shortUrl.value);
 
-      // Visual feedback
       const originalText = this.copyBtn.textContent;
       this.copyBtn.textContent = "Copied!";
       this.copyBtn.classList.add("copy-success");
@@ -519,46 +345,8 @@ class URLShortener {
   }
 
   async deleteUrl(shortCode, btn) {
-    console.log("🗑️ deleteUrl called:");
-    console.log("  - shortCode:", shortCode);
-    console.log("  - isMock:", this.isMock);
-    console.log("  - API_BASE_URL:", this.API_BASE_URL);
+    console.log("🗑️ deleteUrl called:", shortCode);
 
-    if (this.isMock) {
-      console.log("✅ Mock mode - calling backend delete endpoint");
-
-      // In mock mode, call the backend delete endpoint (which handles mock data)
-      try {
-        const response = await fetch(
-          `http://localhost:8000/api/urls/${shortCode}/`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (response.ok) {
-          btn.closest("tr").remove();
-          this.showToast(`Deleted ${shortCode} (mock mode)`);
-
-          // Add delay before refreshing stats in mock mode
-          await this.delay(200); // Give backend time to write file
-
-          // Refresh stats to show updated data
-          this.loadStatistics();
-        } else {
-          this.showToast("Failed to delete URL");
-        }
-      } catch (error) {
-        console.error("Error deleting from mock data:", error);
-        this.showToast("Error deleting URL");
-      }
-      return;
-    }
-
-    console.log("🔐 Real mode - checking authentication");
     try {
       const token = localStorage.getItem("jwt_access");
       if (!token) {
@@ -645,7 +433,6 @@ class URLShortener {
   }
 
   showToast(message) {
-    // Simple toast notification
     const toast = document.createElement("div");
     toast.className =
       "fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 fade-in";
@@ -676,70 +463,13 @@ class URLShortener {
       this.urlInput.classList.remove("border-red-500");
     }
   }
-
-  // Mock Data Generators (for development)
-  generateMockShortCode() {
-    return Math.random().toString(36).substring(2, 8);
-  }
-
-  generateMockStats() {
-    return [
-      {
-        shortCode: "abc123",
-        originalUrl:
-          "https://www.example.com/very-long-url-that-needs-shortening",
-        clickCount: 15,
-      },
-      {
-        shortCode: "xyz789",
-        originalUrl: "https://www.google.com",
-        clickCount: 23,
-      },
-      {
-        shortCode: "def456",
-        originalUrl: "https://www.github.com/user/repository",
-        clickCount: 7,
-      },
-    ];
-  }
-
-  delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Wait for config to be properly fetched from backend
-  // The initial CONFIG has USE_MOCK: false, so we wait until it's been updated
-  let attempts = 0;
-  const maxAttempts = 50; // 5 seconds max wait
-
-  while (attempts < maxAttempts) {
-    // Check if config has been fetched from backend (API_URL will be different from default)
-    if (
-      window.CONFIG &&
-      window.CONFIG.API_URL !== "http://localhost:8000/api/"
-    ) {
-      console.log("✅ Config properly fetched from backend:", window.CONFIG);
-      break;
-    }
-
-    console.log(
-      `⏳ Waiting for config... (attempt ${attempts + 1}/${maxAttempts})`
-    );
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    attempts++;
-  }
-
-  if (attempts >= maxAttempts) {
-    console.warn("⚠️ Config fetch timeout, using default config");
-  }
-
-  // Initialize auth and URLShortener
   try {
     await initAuthUI();
   } catch (e) {
-    console.warn("Auth UI init skipped or failed:", e);
+    console.warn("Auth UI init failed:", e);
   }
 
   window.urlShortener = new URLShortener();

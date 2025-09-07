@@ -56,6 +56,13 @@ ON DUPLICATE KEY UPDATE
 
 -- Useful queries for monitoring:
 
+-- Check all shortened URLs in the database
+-- USE url_shortener;
+-- SELECT * FROM urls;
+
+-- Check specific number of most recent URLs (replace N with desired number, e.g., 5, 10, 20)
+-- SELECT * FROM urls ORDER BY created_at DESC LIMIT N;
+
 -- Check table structure
 -- DESCRIBE urls;
 
