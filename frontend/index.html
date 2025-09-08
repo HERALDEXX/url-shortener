@@ -206,17 +206,6 @@
     </div>
 
     <script src="config.js"></script>
-
-    <script>
-      // Hide auth block if using mock mode
-      document.addEventListener("DOMContentLoaded", () => {
-        if (window.CONFIG && window.CONFIG.USE_MOCK) {
-          const authBlock = document.getElementById("authBlock");
-          if (authBlock) authBlock.style.display = "none";
-        }
-      });
-    </script>
-
     <script src="js/app.js"></script>
   </body>
 </html>

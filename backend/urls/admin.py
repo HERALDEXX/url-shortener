@@ -1,11 +1,6 @@
 # backend/urls/admin.py
 """
 Django Admin configuration for URL Shortener
-
-- Customized User admin (safe: only superusers manage users)
-- Validation: cannot set both is_staff and is_superuser at once
-- Moderators group handling for staff (non-superusers)
-- Keeps your URLModelAdmin enhancements
 """
 
 from django.contrib import admin
@@ -28,8 +23,7 @@ try:
     admin.site.unregister(User)
 except Exception:
     pass
-
-
+  
 # --- Forms with validation to prevent both flags being True ---
 class AdminUserCreationForm(UserCreationForm):
     """
@@ -55,7 +49,6 @@ class AdminUserCreationForm(UserCreationForm):
             )
         return cleaned
 
-
 class AdminUserChangeForm(UserChangeForm):
     """
     Change form also validates the two flags so edits can't produce invalid state.
@@ -76,16 +69,9 @@ class AdminUserChangeForm(UserChangeForm):
             )
         return cleaned
 
-
 @admin.register(User)
 class CustomUserAdmin(DefaultUserAdmin):
-    """
-    User admin:
-      - Only superusers can manage users.
-      - Add page shows is_staff/is_superuser/groups/user_permissions.
-      - Enforces validation on the two flags.
-      - Synchronizes Moderators group membership for staff (non-superusers).
-    """
+    """User admin with validation and permissions"""
     add_form = AdminUserCreationForm
     form = AdminUserChangeForm
 
@@ -98,21 +84,13 @@ class CustomUserAdmin(DefaultUserAdmin):
         (None, {
             "classes": ("wide",),
             "fields": (
-                "username",
-                "email",
-                "password1",
-                "password2",
-                "is_staff",
-                "is_superuser",
-                "groups",
-                "user_permissions",
+                "username", "email", "password1", "password2",
+                "is_staff", "is_superuser", "groups", "user_permissions",
             ),
         }),
     )
 
-    fieldsets = DefaultUserAdmin.fieldsets
-
-    # Restrict user admin UI to superusers only
+    # Restrict to superusers only
     def has_module_permission(self, request):
         return request.user.is_superuser
 
@@ -129,44 +107,29 @@ class CustomUserAdmin(DefaultUserAdmin):
         return request.user.is_superuser
 
     def save_model(self, request, obj, form, change):
-        """
-        Additional server-side enforcement (in case form validation was bypassed):
-         - Disallow creating/updating with both is_staff and is_superuser True.
-         - Only superusers may create superusers.
-         - Keep Moderators group membership for staff (non-superusers).
-        """
+        """Server-side validation and group management"""
         creating = not change
 
-        # Enforce form-level restriction server-side too
         if getattr(obj, "is_staff", False) and getattr(obj, "is_superuser", False):
             raise PermissionDenied("User cannot be both staff and superuser.")
 
-        # Only a superuser can create another superuser
         if creating and getattr(obj, "is_superuser", False) and not request.user.is_superuser:
             raise PermissionDenied("Only superusers may create superuser accounts.")
 
-        # Persist user
         super().save_model(request, obj, form, change)
 
-        # Keep Moderators group consistent: staff (non-superuser) -> in Moderators
+        # Manage Moderators group
         try:
             moderators_group, _ = Group.objects.get_or_create(name="Moderators")
-        except Exception:
-            moderators_group = None
-
-        if moderators_group:
             if obj.is_staff and not obj.is_superuser:
                 if not obj.groups.filter(name="Moderators").exists():
                     obj.groups.add(moderators_group)
-            else:
-                # if not staff, ensure group removed; for superuser leave explicit membership as-is
-                if not obj.is_staff and obj.groups.filter(name="Moderators").exists():
-                    obj.groups.remove(moderators_group)
+            elif not obj.is_staff and obj.groups.filter(name="Moderators").exists():
+                obj.groups.remove(moderators_group)
+        except Exception:
+            pass
 
-
-# -------------------------
-# URLModelAdmin (kept your enhancements; minor tidy-ups)
-# -------------------------
+# URL Model Admin with all the enhancements
 class CustomClickCountFilter(admin.SimpleListFilter):
     title = 'click count range'
     parameter_name = 'click_range'
@@ -194,16 +157,11 @@ class CustomClickCountFilter(admin.SimpleListFilter):
             return queryset.filter(click_count__gte=100)
         return queryset
 
-
 @admin.register(URLModel)
 class URLModelAdmin(admin.ModelAdmin):
     list_display = [
-        'short_code_display',
-        'original_url_display',
-        'click_count_display',
-        'created_at_display',
-        'days_active',
-        'action_buttons'
+        'short_code_display', 'original_url_display', 'click_count_display',
+        'created_at_display', 'days_active', 'action_buttons'
     ]
 
     list_filter = ['created_at', CustomClickCountFilter]
@@ -212,24 +170,13 @@ class URLModelAdmin(admin.ModelAdmin):
     list_per_page = 25
 
     readonly_fields = [
-        'short_code',
-        'click_count',
-        'created_at',
-        'updated_at',
-        'full_short_url',
-        'url_preview',
-        'click_analytics'
+        'short_code', 'click_count', 'created_at', 'updated_at',
+        'full_short_url', 'url_preview', 'click_analytics'
     ]
 
     fields = [
-        'original_url',
-        'short_code',
-        'full_short_url',
-        'url_preview',
-        'click_count',
-        'click_analytics',
-        'created_at',
-        'updated_at',
+        'original_url', 'short_code', 'full_short_url', 'url_preview',
+        'click_count', 'click_analytics', 'created_at', 'updated_at',
     ]
 
     def short_code_display(self, obj):
@@ -242,13 +189,9 @@ class URLModelAdmin(admin.ModelAdmin):
     short_code_display.admin_order_field = 'short_code'
 
     def original_url_display(self, obj):
-        if len(obj.original_url) > 60:
-            display_url = obj.original_url[:57] + '...'
-        else:
-            display_url = obj.original_url
+        display_url = obj.original_url[:57] + '...' if len(obj.original_url) > 60 else obj.original_url
         return format_html(
-            '<a href="{}" target="_blank" title="{}" style="color: #1d4ed8; text-decoration: none;">'
-            '{}</a>',
+            '<a href="{}" target="_blank" title="{}" style="color: #1d4ed8; text-decoration: none;">{}</a>',
             obj.original_url, obj.original_url, display_url
         )
     original_url_display.short_description = 'Original URL'
@@ -346,12 +289,11 @@ class URLModelAdmin(admin.ModelAdmin):
             '<div style="background: #f0f9ff; padding: 12px; border-radius: 6px; border: 1px solid #bae6fd;">'
             '<h4 style="margin: 0 0 8px 0; color: #0c4a6e;">Click Analytics</h4>'
             '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">'
-            '<div><strong>Total Clicks:</strong><br><span style="font-size: 18px; color: #1e40af;">{}</span></div>'
-            '<div><strong>Days Active:</strong><br><span style="font-size: 18px; color: #1e40af;">{}</span></div>'
+            '<div><strong>Total:</strong><br><span style="font-size: 18px; color: #1e40af;">{}</span></div>'
+            '<div><strong>Days:</strong><br><span style="font-size: 18px; color: #1e40af;">{}</span></div>'
             '<div><strong>Avg/Day:</strong><br><span style="font-size: 18px; color: #1e40af;">{:.1f}</span></div>'
             '<div><strong>Performance:</strong><br><span style="font-size: 18px; color: {};">{}</span></div>'
-            '</div>'
-            '</div>',
+            '</div></div>',
             obj.click_count, days_active, avg_clicks_per_day,
             '#059669' if avg_clicks_per_day > 5 else '#d97706' if avg_clicks_per_day > 1 else '#6b7280',
             'Excellent' if avg_clicks_per_day > 5 else 'Good' if avg_clicks_per_day > 1 else 'Low'
@@ -362,7 +304,7 @@ class URLModelAdmin(admin.ModelAdmin):
 
     def reset_click_counts(self, request, queryset):
         updated = queryset.update(click_count=0)
-        self.message_user(request, f'Successfully reset click counts for {updated} URL(s).')
+        self.message_user(request, f'Reset click counts for {updated} URL(s).')
     reset_click_counts.short_description = "Reset click counts"
 
     def export_selected_urls(self, request, queryset):
@@ -389,8 +331,7 @@ class URLModelAdmin(admin.ModelAdmin):
         }
         return super().changelist_view(request, extra_context=extra_context)
 
-
-# Admin header tweaks
+# Admin customization
 admin.site.site_header = "URL Shortener Administration"
 admin.site.site_title = "URL Shortener Admin"
 admin.site.index_title = "Welcome to URL Shortener Administration"
