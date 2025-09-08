@@ -124,6 +124,7 @@ if not STATIC_ROOT.is_absolute():
     STATIC_ROOT = BASE_DIR / STATIC_ROOT
 
 STATIC_ROOT = STATIC_ROOT.resolve()
+
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -137,6 +138,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
@@ -156,6 +161,8 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+# Allow cookies / credentials
 CORS_ALLOW_CREDENTIALS = os.getenv("CORS_ALLOW_CREDENTIALS", "True").lower() == 'true'
 
 CORS_ALLOWED_HEADERS = [
@@ -177,4 +184,5 @@ BASE_URL = os.getenv('BASE_URL', 'http://localhost:8000')
 # Create static directories
 for static_dir in STATICFILES_DIRS:
     if not static_dir.exists():
+        print(f"Creating directory for development static files")
         static_dir.mkdir(parents=True, exist_ok=True)

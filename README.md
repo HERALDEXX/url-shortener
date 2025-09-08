@@ -133,6 +133,14 @@ python manage.py migrate
 
 2. Create the superuser:
 
+- Run migrations first:
+
+```bash
+python manage.py migrate
+```
+
+- Then:
+
 ```bash
 python manage.py createsuperuser
 ```
@@ -151,6 +159,8 @@ python manage.py migrate
 ### **Step 9: Collect Static Files (for production)**
 
 > When `DEBUG=False` (default) in your `.env` file, run the following command to gather all static files into the directory specified by `STATIC_ROOT`:
+
+> From project root directory:
 
 ```bash
 python manage.py collectstatic

@@ -23,7 +23,7 @@ try:
     admin.site.unregister(User)
 except Exception:
     pass
-
+  
 # --- Forms with validation to prevent both flags being True ---
 class AdminUserCreationForm(UserCreationForm):
     """
@@ -59,8 +59,10 @@ class AdminUserChangeForm(UserChangeForm):
 
     def clean(self):
         cleaned = super().clean()
+        # Some change forms may not include explicit boolean fields, guard accordingly
         is_staff = cleaned.get("is_staff")
         is_superuser = cleaned.get("is_superuser")
+        # Only validate when both fields are present (avoids false positives)
         if is_staff is not None and is_superuser is not None and is_staff and is_superuser:
             raise forms.ValidationError(
                 "You cannot set both 'is_staff' and 'is_superuser' at the same time."
@@ -241,12 +243,12 @@ class URLModelAdmin(admin.ModelAdmin):
             '<div style="white-space: nowrap;">'
             '<a href="{}" target="_blank" style="background: #3b82f6; color: white; padding: 4px 8px; '
             'border-radius: 4px; text-decoration: none; font-size: 11px; margin-right: 4px;">Test</a>'
-            '<a href="javascript:navigator.clipboard.writeText(\'{}\'); alert(\'Copied!\');" '
+            '<a href="javascript:navigator.clipboard.writeText(\'{}\'); alert(\'Copied to clipboard!\');" '
             'style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; '
             'text-decoration: none; font-size: 11px; margin-right: 4px;">Copy</a>'
             '<a href="{}" style="background: #dc2626; color: white; padding: 4px 8px; '
             'border-radius: 4px; text-decoration: none; font-size: 11px;" '
-            'onclick="return confirm(\'Delete this link?\');">Delete</a>'
+            'onclick="return confirm(\'Are you sure you want to delete this link?\');">Delete</a>'
             '</div>',
             short_url, short_url, delete_url
         )

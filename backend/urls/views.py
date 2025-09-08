@@ -1,6 +1,10 @@
 # backend/urls/views.py
 """
-API views for URL Shortener
+API views for URL Shortener (improved)
+- Uses DRF parsing (request.data)
+- Normalizes and extracts redirect targets from tracking URLs
+- Clear logging and error handling
+- Keeps mock-file mode support
 """
 
 import logging
@@ -11,6 +15,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
 
 from rest_framework import status
@@ -113,7 +118,7 @@ def normalize_url(raw_url: str):
 @api_view(['POST'])
 def shorten_url(request):
     """
-    Create a shortened URL
+    Create a shortened URL (mock or real)
     POST /shorten
     """
     try:
@@ -222,6 +227,7 @@ def health_check(request):
         'service': 'url-shortener',
         'version': '1.0.0'
     })
+
 
 # Root API info endpoint
 @api_view(['GET'])
