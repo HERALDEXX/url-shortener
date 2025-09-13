@@ -50,6 +50,11 @@ function logoutAndClearToken() {
   localStorage.removeItem("jwt_refresh");
   window.currentUser = null;
   updateAuthUI(null);
+
+  const loginUser = document.getElementById("loginUser");
+  const loginPass = document.getElementById("loginPass");
+  if (loginUser) loginUser.value = "";
+  if (loginPass) loginPass.value = "";
 }
 
 async function fetchCurrentUser() {
@@ -133,11 +138,14 @@ async function initAuthUI() {
 
       try {
         await loginAndStoreToken(u, p);
+        // Clear form after successful login
+        e.target.reset();
       } catch (err) {
         alert("Login failed: " + err.message);
+        document.getElementById("loginPass").value = "";
       }
     });
-
+    
   document.getElementById("logoutBtn")?.addEventListener("click", () => {
     logoutAndClearToken();
   });
@@ -229,13 +237,6 @@ class URLShortener {
       if (!resp.ok) {
         throw new Error("Failed to shorten URL");
       }
-    } catch (backendErr) {
-      console.warn(
-        "Backend shortenUrl failed, falling back to mock-data.json:",
-        backendErr
-      );
-      // fall-through to try mock JSON next
-    }
 
       const data = await resp.json();
       return {
