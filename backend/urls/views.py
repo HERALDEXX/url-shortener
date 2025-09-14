@@ -4,7 +4,6 @@ API views for URL Shortener (improved)
 - Uses DRF parsing (request.data)
 - Normalizes and extracts redirect targets from tracking URLs
 - Clear logging and error handling
-- Keeps mock-file mode support
 """
 
 import logging
@@ -118,7 +117,7 @@ def normalize_url(raw_url: str):
 @api_view(['POST'])
 def shorten_url(request):
     """
-    Create a shortened URL (mock or real)
+    Create a shortened URL
     POST /shorten
     """
     try:
