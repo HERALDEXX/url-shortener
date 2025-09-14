@@ -205,10 +205,7 @@ class URLShortener {
 
       const response = await this.shortenUrl(url);
       this.showResult(response);
-      // Add delay before refreshing stats in mock mode
-      if (this.isMock) {
-        await this.delay(200); // Give backend time to write file
-      }
+      
       this.loadStatistics(); // Refresh stats
     } catch (error) {
       this.showError(

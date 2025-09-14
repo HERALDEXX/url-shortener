@@ -7,37 +7,38 @@
 
 ## Overview
 
-This API provides endpoints for shortening URLs, retrieving stats on shortened URLs, redirecting via short codes, and basic health/info checks. Built with Django and Django REST Framework (DRF). Data is stored in MySQL via Django ORM.
+This API provides endpoints for shortening URLs, retrieving stats on shortened URLs, redirecting via short codes, and basic health/info checks. Built with Django and Django REST Framework (DRF). Data is stored in MySQL via Django ORM with JWT authentication for URL management.
 
-- **Base URL**: Assume `/api/` for JSON endpoints (e.g., `http://yourdomain.com/api/shorten`). Redirects are at root (e.g., `http://yourdomain.com/abc123`).
-- **Authentication**: JWT required for URL management in real database mode (`USE_MOCK=false`). No authentication required in mock mode (`USE_MOCK=true`).
+- **Base URL**: Use `/api/` for JSON endpoints (e.g., `http://yourdomain.com/api/shorten`). Redirects are at root (e.g., `http://yourdomain.com/abc123`).
+- **Authentication**: JWT tokens required for URL deletion and user-specific operations. No authentication required for shortening URLs or viewing stats.
 - **Request/Response Format**: JSON for bodies and responses (where applicable). Errors as `{"error": "message"}`.
-- **Data Model (from URLModel)**: Each URL has `original_url` (string, max 2048 chars), `short_code` (string, unique, 6-10 chars), `click_count` (integer, default 0), `created_at` (datetime, not exposed in API), `updated_at` (datetime, internal).
-- **Serialization**: CamelCase keys in responses (`shortCode`, `originalUrl`, `clickCount`). Only these three fields exposed.
-- **Validation**: URLs checked with `validators.url` (must be valid http/https with domain).
-- **Error Handling**: 400 for bad input, 404 for not found, 500 for server issues.
-- **Other Notes**: No pagination on stats (fetches all). Clicks increment atomically. CSRF exempt on redirects.
+- **Data Model (URLModel)**: Each URL has `original_url` (string, max 2048 chars), `short_code` (string, unique, 6-10 chars), `click_count` (integer, default 0), `owner` (optional user reference), `created_at` (datetime), `updated_at` (datetime).
+- **Serialization**: CamelCase keys in responses (`shortCode`, `originalUrl`, `clickCount`). Only these three fields exposed via URLSerializer.
+- **Validation**: URLs checked with `validators.url` (must be valid http/https with domain). URL normalization extracts redirect targets from tracking URLs.
+- **Error Handling**: 400 for bad input, 401 for authentication required, 403 for insufficient permissions, 404 for not found, 500 for server issues.
+- **Other Notes**: No pagination on stats (fetches all). Clicks increment atomically using Django's `F()`. CSRF exempt on redirects.
 
 ## Endpoints
 
 ### 1. POST /api/shorten
 
-**Description**: Shorten a new URL or return existing short code if duplicate. Creates a new `URLModel` if needed.
+**Description**: Shorten a new URL or return existing short code if duplicate. Creates a new `URLModel` if needed. Associates with authenticated user if logged in.
 
 **Request**:
 
 - Method: POST
 - Headers: `Content-Type: application/json`
+- Headers (optional): `Authorization: Bearer <jwt_token>` (to associate URL with user)
 - Body: `{"url": "https://example.com/long/path"}` (required string)
 
 **Responses**:
 
 - 201 Created (new URL): `{"shortCode": "abc123", "originalUrl": "https://example.com/long/path"}`
 - 200 OK (existing URL): `{"shortCode": "abc123", "originalUrl": "https://example.com/long/path", "message": "URL already exists"}`
-- 400 Bad Request: `{"error": "URL is required"}` | `{"error": "Invalid URL format"}` | `{"error": "Invalid JSON data"}`
+- 400 Bad Request: `{"error": "Invalid URL format"}` | `{"error": "Server error: details"}`
 - 500 Internal Server Error: `{"error": "Server error: details"}`
 
-**Notes**: Checks for duplicates by `original_url`. Generates random 6-char short code if new.
+**Notes**: Checks for duplicates by `original_url`. Generates random 6-char short code if new. URL normalization attempts to extract real targets from tracking URLs.
 
 ### 2. GET /api/stats
 
@@ -46,7 +47,7 @@ This API provides endpoints for shortening URLs, retrieving stats on shortened U
 **Request**:
 
 - Method: GET
-- No body or params.
+- No body or params required.
 
 **Responses**:
 
@@ -67,7 +68,7 @@ This API provides endpoints for shortening URLs, retrieving stats on shortened U
   ```
 - 500 Internal Server Error: `{"error": "Server error: details"}`
 
-**Notes**: Uses `URLSerializer` for output. No filtering/pagination yet – scales poorly for large datasets.
+**Notes**: Uses `URLSerializer` for output. Returns all URLs regardless of owner. No filtering/pagination implemented yet.
 
 ### 3. GET /{short_code}
 
@@ -84,9 +85,77 @@ This API provides endpoints for shortening URLs, retrieving stats on shortened U
 - 404 Not Found: `{"error": "Short URL not found"}` (JSON)
 - 500 Internal Server Error: `{"error": "Server error: details"}` (JSON)
 
-**Notes**: Handles root-level paths. Click update uses Django's `F` for atomicity.
+**Notes**: Handles root-level paths. Click update uses Django's `F('click_count') + 1` for atomic increments to avoid race conditions.
 
-### 4. GET /api/health
+### 4. DELETE /api/urls/{short_code}/
+
+**Description**: Delete a shortened URL. Requires JWT authentication.
+
+**Request**:
+
+- Method: DELETE
+- Path: `/api/urls/abc123/`
+- Headers: `Authorization: Bearer <jwt_token>` (required)
+
+**Responses**:
+
+- 200 OK: `{"message": "URL abc123 deleted successfully."}`
+- 401 Unauthorized: `{"detail": "Authentication credentials were not provided."}`
+- 403 Forbidden: `{"error": "Not allowed"}` (insufficient permissions)
+- 404 Not Found: URL not found
+
+**Notes**: 
+- Only the URL owner or staff users can delete a URL
+- If URL has no owner (created before authentication), only staff can delete
+- Requires valid JWT token in Authorization header
+
+### 5. POST /api/token/
+
+**Description**: Authenticate user and obtain JWT tokens.
+
+**Request**:
+
+- Method: POST
+- Headers: `Content-Type: application/json`
+- Body: `{"username": "your_username", "password": "your_password"}`
+
+**Responses**:
+
+- 200 OK: `{"access": "jwt_access_token", "refresh": "jwt_refresh_token"}`
+- 400 Bad Request: `{"detail": "No active account found with the given credentials"}`
+
+**Notes**: Access tokens expire in 30 minutes, refresh tokens in 7 days. Users must be created via Django admin panel.
+
+### 6. POST /api/token/refresh/
+
+**Description**: Refresh JWT access token using refresh token.
+
+**Request**:
+
+- Method: POST
+- Headers: `Content-Type: application/json`
+- Body: `{"refresh": "jwt_refresh_token"}`
+
+**Responses**:
+
+- 200 OK: `{"access": "new_jwt_access_token"}`
+- 401 Unauthorized: `{"detail": "Token is invalid or expired"}`
+
+### 7. GET /api/me
+
+**Description**: Get current authenticated user info.
+
+**Request**:
+
+- Method: GET
+- Headers: `Authorization: Bearer <jwt_token>`
+
+**Responses**:
+
+- 200 OK: `{"id": 1, "username": "user", "is_staff": false, "is_superuser": false}`
+- 401 Unauthorized: `{"detail": "Authentication credentials were not provided."}`
+
+### 8. GET /api/health
 
 **Description**: Service health check.
 
@@ -98,11 +167,11 @@ This API provides endpoints for shortening URLs, retrieving stats on shortened U
 
 - 200 OK: `{"status": "healthy", "service": "url-shortener", "version": "1.0.0"}`
 
-**Notes**: Always succeeds if server responds.
+**Notes**: Always succeeds if server responds. Useful for monitoring and load balancer health checks.
 
-### 5. GET /api/
+### 9. GET /api/
 
-**Description**: API root info.
+**Description**: API root info and available endpoints.
 
 **Request**:
 
@@ -124,77 +193,106 @@ This API provides endpoints for shortening URLs, retrieving stats on shortened U
   }
   ```
 
-**Notes**: For discovery; lists endpoints with `/api/` prefix where applicable.
+**Notes**: Endpoint discovery for API consumers.
 
-### 6. POST /api/token/
+## Authentication & User Management
 
-**Description**: Authenticate user and obtain JWT tokens (real database mode only).
+### Creating User Accounts
 
-**Request**:
+User accounts must be created through the Django admin dashboard:
 
-- Method: POST
-- Headers: `Content-Type: application/json`
-- Body: `{"username": "your_username", "password": "your_password"}`
+1. **Start the backend server:**
+   ```bash
+   cd backend && python manage.py runserver
+   ```
 
-**Responses**:
+2. **Access admin dashboard:** [`http://localhost:8000/admin/`](http://localhost:8000/admin/)
 
-- 200 OK: `{"access": "jwt_access_token", "refresh": "jwt_refresh_token"}`
-- 400 Bad Request: `{"detail": "Invalid credentials"}`
+3. **Login with superuser credentials** (created during setup with `python manage.py createsuperuser`)
 
-**Notes**: Required for URL deletion in real database mode. Tokens should be included in Authorization header as `Bearer <token>`.
+4. **Create new users:**
+   - Navigate to "Users" section
+   - Click "Add User"
+   - Set username and password
+   - Optionally assign staff/admin permissions
 
-### 7. DELETE /api/urls/{short_code}/
+### Permission Levels
 
-**Description**: Delete a shortened URL (authentication required in real database mode).
+- **Regular Users**: Can create URLs (associated with their account) and delete their own URLs
+- **Staff Users**: Can delete any URL, access admin interface for URL management
+- **Superusers**: Full admin access, can create/manage other users
 
-**Request**:
+### JWT Token Usage
 
-- Method: DELETE
-- Path: `/api/urls/abc123/`
-- Headers (real mode): `Authorization: Bearer <jwt_token>`
+Include JWT tokens in requests using the Authorization header:
+```
+Authorization: Bearer your_jwt_access_token_here
+```
 
-**Responses**:
+## Error Handling
 
-- 200 OK: `{"message": "URL abc123 deleted successfully."}`
-- 401 Unauthorized: `{"error": "Authentication required"}` (real mode only)
-- 403 Forbidden: `{"error": "Not allowed"}` (insufficient permissions)
-- 404 Not Found: `{"error": "URL not found"}`
+### Common Error Responses
 
-**Notes**: In mock mode, no authentication required. In real mode, only URL owner or staff can delete.
+- **400 Bad Request**: Invalid input data, malformed JSON, invalid URL format
+- **401 Unauthorized**: Missing or invalid JWT token, expired token
+- **403 Forbidden**: Valid authentication but insufficient permissions
+- **404 Not Found**: Requested resource doesn't exist
+- **500 Internal Server Error**: Server-side errors, database connection issues
 
-### 8. GET /api/me
+### Error Response Format
 
-**Description**: Get current authenticated user info (real database mode only).
+All errors return JSON with descriptive messages:
+```json
+{
+  "error": "Description of what went wrong"
+}
+```
 
-**Request**:
+Or for DRF authentication errors:
+```json
+{
+  "detail": "Authentication credentials were not provided."
+}
+```
 
-- Method: GET
-- Headers: `Authorization: Bearer <jwt_token>`
+## Development Notes
 
-**Responses**:
+- **Database**: MySQL 8.0+ with PyMySQL driver
+- **CORS**: Configured for frontend integration, set `CORS_ALLOWED_ORIGINS` for production
+- **Rate Limiting**: Not implemented yet, planned for future versions
+- **Pagination**: Stats endpoint returns all records, will add pagination for large datasets
+- **Monitoring**: Use `/api/health` endpoint for health checks
+- **Security**: HTTPS recommended for production, secure JWT token storage required
 
-- 200 OK: `{"id": 1, "username": "user", "is_staff": false, "is_superuser": false}`
-- 401 Unauthorized: Authentication required
+## Example Usage
 
-### 9. GET /api/config/
+### Shorten a URL
+```bash
+curl -X POST http://localhost:8000/api/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/very-long-url"}'
+```
 
-**Description**: Get current configuration mode.
+### Get all statistics
+```bash
+curl http://localhost:8000/api/stats
+```
 
-**Request**:
+### Login and get tokens
+```bash
+curl -X POST http://localhost:8000/api/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "your_user", "password": "your_pass"}'
+```
 
-- Method: GET
+### Delete a URL (authenticated)
+```bash
+curl -X DELETE http://localhost:8000/api/urls/abc123/ \
+  -H "Authorization: Bearer your_jwt_token"
+```
 
-**Responses**:
-
-- 200 OK: `{"use_mock": true}` or `{"use_mock": false}`
-
-**Notes**: Frontend uses this to determine which mode the backend is running in.
-
-## General Guidelines
-
-- **Versioning**: v1.0.0 — no breaking changes planned.
-- **Authentication**: JWT tokens required for URL management in real database mode. Create users via Django admin at `http://localhost:8000/admin/`.
-- **Mock vs Real Mode**: Controlled by `USE_MOCK` setting. Mock mode uses JSON file storage with no authentication. Real mode uses MySQL with full security.
-- **CORS**: Configured and ready. Set `CORS_ALLOWED_ORIGINS` environment variable for production deployments.
-- **Scaling Considerations**: Stats endpoint pulls all records — add query params for filters/limits soon.
-- **Testing**: Use tools like Postman. Mock responses for frontend testing (see [mock-data.json](../frontend/mock-data.json)).
+### Test redirect
+```bash
+curl -I http://localhost:8000/abc123
+# Should return 302 redirect to original URL
+```
