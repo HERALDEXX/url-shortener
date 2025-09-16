@@ -205,7 +205,6 @@ class URLShortener {
 
       const response = await this.shortenUrl(url);
       this.showResult(response);
-      
       this.loadStatistics(); // Refresh stats
     } catch (error) {
       this.showError(

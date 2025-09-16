@@ -3,11 +3,30 @@
 **Version**: 1.0.0  
 **Base URL**: [`http://localhost:8000/api/`](http://localhost:8000/api/)
 
+## Table of Contents
+
+- 📋 [Overview](#overview)
+- 🔗 [Endpoints](#endpoints)
+  - [POST /api/shorten](#1-post-apishorten)
+  - [GET /api/stats](#2-get-apistats)
+  - [GET /{short_code}](#3-get-short_code)
+  - [DELETE /api/urls/{short_code}/](#4-delete-apiurlsshort_code)
+  - [POST /api/token/](#5-post-apitoken)
+  - [POST /api/token/refresh/](#6-post-apitokenrefresh)
+  - [GET /api/me](#7-get-apime)
+  - [GET /api/health](#8-get-apihealth)
+  - [GET /api/](#9-get-api)
+- 🔐 [Authentication & User Management](#authentication--user-management)
+- ⚠️ [Error Handling](#error-handling)
+- 🛠️ [Development Notes](#development-notes)
+- 🗄️ [Database Schema](#database-schema)
+- 💡 [Example Usage](#example-usage)
+
 ---
 
 ## Overview
 
-This API provides endpoints for shortening URLs, retrieving stats on shortened URLs, redirecting via short codes, and basic health/info checks. Built with Django and Django REST Framework (DRF). Data is stored in MySQL via Django ORM with JWT authentication for URL management.
+This API provides endpoints for shortening URLs, retrieving stats on shortened URLs, redirecting via short codes, and basic health/info checks. Built with Django and Django REST Framework (DRF). Data is stored in PostgreSQL via Django ORM with JWT authentication for URL management.
 
 - **Base URL**: Use `/api/` for JSON endpoints (e.g., `http://yourdomain.com/api/shorten`). Redirects are at root (e.g., `http://yourdomain.com/abc123`).
 - **Authentication**: JWT tokens required for URL deletion and user-specific operations. No authentication required for shortening URLs or viewing stats.
@@ -257,12 +276,37 @@ Or for DRF authentication errors:
 
 ## Development Notes
 
-- **Database**: MySQL 8.0+ with PyMySQL driver
+- **Database**: PostgreSQL 12+ with psycopg2 driver
+- **Performance**: PostgreSQL provides better concurrent operation handling and atomic operations
 - **CORS**: Configured for frontend integration, set `CORS_ALLOWED_ORIGINS` for production
 - **Rate Limiting**: Not implemented yet, planned for future versions
 - **Pagination**: Stats endpoint returns all records, will add pagination for large datasets
 - **Monitoring**: Use `/api/health` endpoint for health checks
 - **Security**: HTTPS recommended for production, secure JWT token storage required
+- **Scalability**: PostgreSQL offers better horizontal scaling options for future growth
+
+## Database Schema
+
+The application uses PostgreSQL with the following main table structure:
+
+```sql
+-- URLs table
+CREATE TABLE urls (
+    id BIGSERIAL PRIMARY KEY,
+    original_url VARCHAR(2048) NOT NULL,
+    short_code VARCHAR(10) NOT NULL UNIQUE,
+    click_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    owner_id BIGINT REFERENCES auth_user(id) ON DELETE SET NULL
+);
+
+-- Indexes for performance
+CREATE INDEX urls_short_code_idx ON urls(short_code);
+CREATE INDEX urls_created_at_idx ON urls(created_at);
+CREATE INDEX urls_click_count_idx ON urls(click_count);
+CREATE INDEX urls_owner_id_idx ON urls(owner_id);
+```
 
 ## Example Usage
 
@@ -295,4 +339,13 @@ curl -X DELETE http://localhost:8000/api/urls/abc123/ \
 ```bash
 curl -I http://localhost:8000/abc123
 # Should return 302 redirect to original URL
+```
+
+### Database connection test
+```bash
+# Test PostgreSQL connection
+psql -U url_shortener_user -d url_shortener -h localhost
+
+# Check if API can connect to database
+curl http://localhost:8000/api/health
 ```

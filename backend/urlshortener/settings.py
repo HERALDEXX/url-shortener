@@ -71,20 +71,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'urlshortener.wsgi.application'
 
 # Database configuration
-import pymysql
-pymysql.install_as_MySQLdb()
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('DATABASE_NAME', 'url_shortener'),
-        'USER': os.getenv('DATABASE_USER', 'root'),
+        'USER': os.getenv('DATABASE_USER', 'url_shortener_user'),
         'PASSWORD': os.getenv('DATABASE_PASSWORD', ''),
         'HOST': os.getenv('DATABASE_HOST', 'localhost'),
-        'PORT': os.getenv('DATABASE_PORT', '3306'),
+        'PORT': os.getenv('DATABASE_PORT', '5432'),
         'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
+            'client_encoding': 'UTF8',
         },
     }
 }
