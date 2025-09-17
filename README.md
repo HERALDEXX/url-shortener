@@ -1,19 +1,22 @@
-# URL Shortener
+# LinkCrush
 
-[![License](https://img.shields.io/github/license/HERALDEXX/url-shortener)](LICENSE)
+[![License](https://img.shields.io/github/license/HERALDEXX/link-crush)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12%2B-blue.svg)](https://www.postgresql.org/download/)
-[![Issues](https://img.shields.io/github/issues/HERALDEXX/url-shortener)](https://github.com/HERALDEXX/url-shortener/issues)
-[![Pull Requests](https://img.shields.io/github/issues-pr/HERALDEXX/url-shortener)](https://github.com/HERALDEXX/url-shortener/pulls)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5.3-black.svg)](https://nextjs.org/)
+[![Issues](https://img.shields.io/github/issues/HERALDEXX/link-crush)](https://github.com/HERALDEXX/link-crush/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/HERALDEXX/link-crush)](https://github.com/HERALDEXX/link-crush/pulls)
 
-A full-stack web application that allows users to shorten long URLs, track click analytics, and manage their shortened links. Built with Django REST Framework backend and vanilla JavaScript frontend.
+Transform endless URLs into powerful, trackable links with professional URL shortening, real-time analytics, and lightning-fast redirects.
 
 ## Table of Contents
 
 - 🚀 [Features](#features)
+- 📸 [Screenshots](#screenshots)
 - 🛠️ [Tech Stack](#tech-stack)
 - 📋 [Prerequisites](#prerequisites)
 - 🚀 [Quick Start](#quick-start)
+- 🎨 [Frontend Options](#frontend-options)
 - 🔐 [Authentication & User Management](#authentication--user-management)
 - 📁 [Project Structure](#project-structure)
 - 📚 [API Documentation](#api-documentation)
@@ -25,33 +28,75 @@ A full-stack web application that allows users to shorten long URLs, track click
 
 ## Features
 
-- **URL Shortening**: Convert long URLs into short, shareable links
-- **Click Tracking**: Monitor access counts for each shortened URL
-- **Analytics Dashboard**: View statistics for all created URLs
+- **Modern URL Shortening**: Convert long URLs into short, shareable links with a stunning interface
+- **Dual Frontend Options**: Choose between modern Next.js or lightweight vanilla JavaScript
+- **Real-time Analytics**: Monitor click counts and performance metrics
+- **Professional Dashboard**: Beautiful glassmorphism design with smooth animations
 - **User Authentication**: JWT-based authentication for URL management
 - **Admin Interface**: Django admin panel for user management and backend administration
-- **Mobile-Friendly**: Responsive design for all devices
-- **Copy to Clipboard**: One-click sharing functionality
+- **Mobile-First Design**: Responsive interface that works perfectly on all devices
+- **One-Click Sharing**: Copy to clipboard functionality with visual feedback
+- **Dark Theme**: Modern gradient backgrounds with dynamic visual effects
 - **RESTful API**: Clean API endpoints for integration
+
+## Screenshots
+
+### Modern Next.js Frontend
+
+**🌟 Landing Page (Not Signed In)**
+<img src="frontend/screenshots/modern-frontend-landing.png" alt="LinkCrush Modern Frontend - Landing Page" width="800">
+
+**🔐 Signed-In Dashboard**
+<img src="frontend/screenshots/modern-frontend-signed-in.png" alt="LinkCrush Modern Frontend - Signed In Dashboard" width="800">
+
+**📊 URL Analytics**
+<img src="frontend/screenshots/modern-frontend-analytics.png" alt="LinkCrush Modern Frontend - URL Analytics" width="800">
+
+### Legacy Vanilla Frontend
+
+**⚡ Signed-In Interface**
+<img src="frontend/screenshots/legacy-frontend-signed-in.png" alt="LinkCrush Legacy Frontend - Signed In" width="800">
+
+---
 
 ## Tech Stack
 
-**Backend**: Django 4.2.7, Django REST Framework, PostgreSQL 12+ with psycopg2  
-**Frontend**: HTML5, CSS3, JavaScript ES6+, Tailwind CSS  
-**Hosting**: Railway/Render (backend), Netlify/Vercel (frontend)
+### Backend
+- **Django 4.2.7** - Python web framework
+- **Django REST Framework** - API development
+- **PostgreSQL 12+** with psycopg2 - Database
+- **JWT Authentication** - Secure user sessions
+
+### Frontend Options
+
+**🔥 Modern Frontend (Next.js 15)**
+- **Next.js 15.5.3** - React framework with App Router
+- **React 19** - Latest React with modern hooks
+- **TypeScript** - Type-safe development
+- **Tailwind CSS v4** - Modern utility-first styling
+- **Glassmorphism UI** - Contemporary design with backdrop blur effects
+- **Advanced Animations** - Smooth transitions and micro-interactions
+
+**⚡ Legacy Frontend (Vanilla)**
+- **HTML5, CSS3, JavaScript ES6+** - Lightweight and fast
+- **Tailwind CSS** - Utility-first styling
+- **Vanilla JavaScript** - No framework dependencies
+- **Simple animations** - CSS-based transitions
+
+### Hosting
+- **Railway/Render** (backend)
+- **Vercel/Netlify** (frontend)
 
 ## Prerequisites
 
 - **Python 3.8+** - [Download](https://www.python.org/downloads/)
+- **Node.js 18+** - [Download](https://nodejs.org/) (for Next.js frontend)
 - **PostgreSQL 12+** - [Download](https://www.postgresql.org/download/)
 - **Git** - [Download](https://git-scm.com/downloads)
 
-[📖 **PostgreSQL setup guide (Recommended)**](https://www.postgresql.org/docs/current/tutorial-install.html)
-
 Verify installation:
-
 ```bash
-python --version && psql --version && git --version
+python --version && node --version && psql --version && git --version
 ```
 
 ## Quick Start
@@ -59,14 +104,8 @@ python --version && psql --version && git --version
 ### **Step 1: Clone and setup**
 
 ```bash
-git clone https://github.com/HERALDEXX/url-shortener.git
-```
-
-```bash
-cd url-shortener
-```
-
-```bash
+git clone https://github.com/HERALDEXX/link-crush.git
+cd link-crush
 cd backend && python -m venv venv
 ```
 
@@ -75,142 +114,125 @@ cd backend && python -m venv venv
 ```bash
 # Windows
 .\venv\Scripts\activate.bat
-```
 
-```bash
 # Unix-based (macOS, Linux, etc)
 source venv/bin/activate
 ```
 
-### **Step 3: Install dependencies and configure**
+### **Step 3: Install backend dependencies**
 
 ```bash
 pip install -r requirements.txt
 cd ..  # Go back to root directory for shared .env
-
-# Windows
-copy .env.example .env
 ```
 
+### **Step 4: Environment setup**
+
 ```bash
+# Windows
+copy .env.example .env
+
 # Unix-based (macOS, Linux, etc)
 cp .env.example .env
 ```
 
-### **Step 4: Generate secret key and update .env**
-
+Generate Django secret key:
 ```bash
 cd backend
-```
-
-```bash
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
 
-> Edit `.env` file (in root directory) and replace `SECRET_KEY` value with the generated key
+Edit `.env` file and replace `SECRET_KEY` value with the generated key.
 
-### **Step 5: Create the database and user in PostgreSQL**
+### **Step 5: Database setup**
 
-Open your terminal and connect to PostgreSQL:
-
-> Connect to PostgreSQL as superuser (superuser is `postgres` by default, change if different):
-
+Connect to PostgreSQL and create database:
 ```bash
 psql -U postgres
 ```
 
-> For Linux (if `psql` command not found):
-
-```bash
-sudo -u postgres psql
-```
-
-Then create the database and user:
-
 ```sql
 -- Create database
-CREATE DATABASE url_shortener;
+CREATE DATABASE link_crush;
 
 -- Create user with password
--- Replace 'your_postgresql_password' with your desired password for the user url_shortener_user
-CREATE USER url_shortener_user WITH ENCRYPTED PASSWORD 'your_postgresql_password';
+-- Replace 'your_postgresql_password' with your desired password for the user link_crush_user
+CREATE USER link_crush_user WITH ENCRYPTED PASSWORD 'your_postgresql_password';
 
 -- Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE url_shortener TO url_shortener_user;
+GRANT ALL PRIVILEGES ON DATABASE link_crush TO link_crush_user;
 
 -- Connect to the database
-\c url_shortener;
+\c link_crush;
 
 -- Grant schema privileges
-GRANT ALL ON SCHEMA public TO url_shortener_user;
+GRANT ALL ON SCHEMA public TO link_crush_user;
 
 -- Exit
 \q
 ```
 
-### **Step 6: Set up PostgreSQL database**
-
 Edit `.env` file (in root directory) and replace the values for:
 
-- `DATABASE_PASSWORD` with the password you set for `url_shortener_user` in [Step 5](#step-5-create-the-database-and-user-in-postgresql)
+- `DATABASE_PASSWORD` with the password you set for `link_crush_user` in [Step 5](#step-5-database-setup)
 - `DATABASE_HOST` **if only** you are using a custom host, otherwise leave as `localhost`
 - `DATABASE_PORT` **if only** you set a custom port, otherwise leave as `5432`
 
-### **Step 7: Run Django migrations**
-
-> From `backend` directory with virtual environment activated:
+### **Step 6: Run Django setup**
 
 ```bash
+cd backend
 python manage.py makemigrations
 python manage.py migrate
-```
-
-### **Step 8: Create Django Admin User (Superuser)**
-
-To access the Django admin panel, create a superuser account:
-
-```bash
 python manage.py createsuperuser
+python manage.py collectstatic  # If DEBUG=False
 ```
 
-Follow the prompts to set a username, email, and password. Use these credentials to log in at [http://localhost:8000/admin/](http://localhost:8000/admin/) when the backend server is running.
-
-### **Step 9: Collect Static Files (for production)**
-
-> When `DEBUG=False` (default) in your `.env` file, run the following command to gather all static files:
-
-> From backend directory:
-
-```bash
-python manage.py collectstatic
-```
-
-### **Step 10: Run backend server**
+### **Step 7: Start backend server**
 
 ```bash
 python manage.py runserver
 ```
 
-### **Step 11: Serve frontend (new terminal)**
+## Frontend Options
 
-> Open a separate terminal window/tab
+Choose between our **modern Next.js frontend** or **lightweight legacy frontend**:
 
-> From project root directory:
+### 🔥 **Option A: Modern Next.js Frontend (Recommended)**
 
+**Features:**
+- ✨ Stunning glassmorphism design
+- 🎨 Advanced animations and transitions  
+- 🚀 Lightning-fast performance
+- 📱 Mobile-first responsive design
+- 🔒 TypeScript for better development experience
+
+**Setup:**
 ```bash
+# New terminal window
 cd frontend
+npm install
+npm run dev
+```
+
+**Access:** http://localhost:3000
+
+### ⚡ **Option B: Legacy Vanilla Frontend**
+
+**Features:**
+- 🪶 Lightweight and fast
+- 📦 No build process required
+- 🔧 Simple to customize
+- 🌐 Works in any browser
+
+**Setup:**
+```bash
+# New terminal window
+cd legacy-frontend
 python -m http.server 8080
 ```
 
-### **Access:**
-
-- Frontend: http://localhost:8080
-- Backend API: http://localhost:8000/api/
-- Admin Panel: http://localhost:8000/admin/
-
-**Stopping the Servers:**
-
-- To stop either the backend or frontend server, go to the terminal window where it is running and press `Ctrl + C`.
+**Access:** http://localhost:8080
 
 ## Authentication & User Management
 
@@ -221,70 +243,78 @@ python -m http.server 8080
 User accounts must be created through the Django admin dashboard:
 
 1. **Start the backend server:**
-
    ```bash
    cd backend && python manage.py runserver
    ```
 
 2. Access admin dashboard: [`http://localhost:8000/admin/`](http://localhost:8000/admin/)
-3. Login with superuser credentials (created during setup)
-4. Create new users:
-
-   - Navigate to "Users" section
-   - Click "Add User"
-   - Set username and password
-   - Optionally assign staff/admin permissions
+3. Login with superuser credentials
+4. Create new users with appropriate permissions
 
 ### Frontend Authentication
 
-Users can then log in through the frontend interface:
-
-- Enter username and password in the login form
-- Authentication uses JWT tokens for secure API access
-- Only authenticated users can delete URLs they own
-- Staff users can delete any URL
+Users can log in through either frontend interface:
+- **Modern Frontend**: Glassmorphism login form with smooth animations
+- **Legacy Frontend**: Simple, clean login interface
+- Both use JWT tokens for secure API access
+- Staff/admin badges display user permissions
 
 ## Project Structure
 
 ```
-url-shortener/
-├── frontend/
-│   ├── index.html
-│   ├── config.js               # Configuration management
-│   ├── css/styles.css
-│   └── js/app.js
-├── backend/
-│   ├── urlshortener/        # Django project
-│   ├── urls/                # Django app
+link-crush/
+├── frontend/                    # 🔥 Modern Next.js Frontend
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── globals.css     # Enhanced Tailwind v4 + animations
+│   │   │   ├── layout.tsx      # Root layout
+│   │   │   └── page.tsx        # Main page component
+│   │   ├── components/         # React components
+│   │   │   ├── AuthBlock.tsx   # Glassmorphism auth interface
+│   │   │   ├── URLShortenerForm.tsx  # Modern form with animations
+│   │   │   ├── StatisticsTable.tsx   # Beautiful analytics display
+│   │   │   └── Toast.tsx       # Modern notifications
+│   │   ├── hooks/              # Custom React hooks
+│   │   └── lib/                # Utilities and API client
+│   ├── package.json
+│   └── tailwind.config.js      # Tailwind v4 configuration
+│
+├── legacy-frontend/            # ⚡ Legacy Vanilla Frontend  
+│   ├── index.html             # Main HTML file
+│   ├── css/styles.css         # Custom CSS animations
+│   ├── js/app.js             # Vanilla JavaScript logic
+│   └── config.js             # Frontend configuration
+│
+├── backend/                   # Django Backend
+│   ├── urlshortener/         # Django project
+│   ├── urls/                 # Django app
 │   ├── manage.py
 │   ├── requirements.txt
-│   └── venv/               # Python virtual environment (not in version control)
-├── database/postgresql_schema.sql      # PostgreSQL reference schema
-├── .env                     # Shared environment file (not in version control)
+│   └── venv/                 # Virtual environment
+│
+├── database/postgresql_schema.sql  # Database reference
+├── .env                      # Environment variables (not in VCS)
 ├── .env.example             # Environment template
 └── README.md
 ```
 
 ## API Documentation
 
-See [docs/API_CONTRACT.md](docs/API_CONTRACT.md) for full API specification details.
+See [docs/API_CONTRACT.md](docs/API_CONTRACT.md) for full API specification.
 
 ### Quick Reference
 
 **Core Endpoints:**
-
 - `POST /api/shorten` - Create shortened URL
-- `GET /api/stats` - Get URL statistics
+- `GET /api/stats` - Get URL statistics  
 - `GET /{shortCode}` - Redirect to original URL
 - `DELETE /api/urls/{shortCode}/` - Delete URL (auth required)
 
 **Authentication:**
-
 - `POST /api/token/` - Login and get JWT tokens
 - `GET /api/me` - Get current user info
 
 **System:**
-
 - `GET /api/health` - Health check
 
 ### Example Usage
@@ -308,94 +338,56 @@ curl -X POST http://localhost:8000/api/token/ \
 
 ### Daily Workflow
 
+**Backend:**
 ```bash
-git pull origin dev
-```
-
-Make your changes...
-
-> Backend:
-
-```bash
-# Windows
-cd backend && .\venv\Scripts\activate.bat
-```
-
-```bash
-# Unix-based (macOS, Linux, etc)
-cd backend && source venv/bin/activate
-```
-
-```bash
-python manage.py makemigrations
-python manage.py migrate
+cd backend && .\venv\Scripts\activate.bat  # or source venv/bin/activate on Unix (macOS, Linux, etc)
 python manage.py runserver
 ```
 
-> Frontend (**Open separate terminal window/tab**)
-
+**Modern Frontend:**
 ```bash
-cd frontend && python -m http.server 8080
+cd frontend && npm run dev
 ```
+
+**Legacy Frontend:**
+```bash
+cd legacy-frontend && python -m http.server 8080
+```
+
+### Environment Variables
+
+Create `.env.local` in frontend directory for Next.js:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_SHORT_URL_BASE=http://localhost:8000
+```
+
+### Making Changes
+
+- **Next.js Frontend**: Edit files in `src/`, hot reload is automatic
+- **Legacy Frontend**: Edit HTML/CSS/JS directly, refresh browser
+- **Backend**: Django auto-reloads on file changes
 
 ### Database Changes
 
 ```bash
+cd backend
 python manage.py makemigrations
-python manage.py migrate
-```
-
-### Testing
-
-```bash
-python manage.py test
-```
-
-### Create Admin User
-
-```bash
-python manage.py createsuperuser
-```
-
-### Database Management
-
-#### Check PostgreSQL connection
-
-```bash
-python manage.py dbshell
-```
-
-#### View migration status
-
-```bash
-python manage.py showmigrations
-```
-
-#### Reset database (development only)
-
-```bash
-# Connect to PostgreSQL
-psql -U postgres
-
-# Drop and recreate database
-DROP DATABASE IF EXISTS url_shortener;
-CREATE DATABASE url_shortener;
-GRANT ALL PRIVILEGES ON DATABASE url_shortener TO url_shortener_user;
-
-# Exit and run migrations
-\q
 python manage.py migrate
 ```
 
 ## Branches
 
-- [**main**](https://github.com/HERALDEXX/url-shortener/tree/main) → stable, production-ready code. This branch is protected: only merge into `main` after changes are reviewed, tested, and approved.
-- [**dev**](https://github.com/HERALDEXX/url-shortener/tree/dev) (Default branch) → active development and beta features. Create feature branches off `dev` (e.g., `dev/feature/your-feature`) and open PRs against `dev`.
+- [**main**](https://github.com/HERALDEXX/link-crush/tree/main) → Production-ready code (default branch)
+- [**dev**](https://github.com/HERALDEXX/link-crush/tree/dev) → Active development
+
+Create feature branches from `dev`: `git checkout -b dev/feature/your-feature`
 
 ## Deployment
 
-### Environment Variables for Production
+### Backend (Railway/Render)
 
+Environment variables:
 ```env
 SECRET_KEY=your-production-secret-key-50-chars
 DEBUG=False
@@ -407,73 +399,70 @@ DATABASE_PORT=5432
 CORS_ALLOWED_ORIGINS=https://your-domain.com
 ```
 
-### Using DATABASE_URL (Heroku/Railway style)
-
-```env
-DATABASE_URL=postgresql://user:password@host:port/database_name
-```
-
-### Backend (Railway/Render)
+### Modern Frontend (Vercel - Recommended)
 
 1. Connect GitHub repository
-2. Add environment variables (or DATABASE_URL)
-3. Deploy on push to main
+2. Framework preset: **Next.js**
+3. Root directory: `frontend`
+4. Environment variables:
+   ```env
+   NEXT_PUBLIC_API_URL=https://your-backend.railway.app/api
+   NEXT_PUBLIC_SHORT_URL_BASE=https://your-backend.railway.app
+   ```
 
-### Frontend (Netlify/Vercel)
+### Legacy Frontend (Netlify)
 
-1. Connect GitHub repository
-2. Set build directory to `frontend`
-3. Update API URL in `js/app.js` to production backend URL
+1. Connect GitHub repository  
+2. Build directory: `legacy-frontend`
+3. No build command needed
+4. Update `config.js` with production API URL
 
 ## Troubleshooting
 
-**Backend won't start**
+### Backend Issues
 
-- Check PostgreSQL is running: `sudo systemctl status postgresql` (Linux) or `brew services list | grep postgresql` (macOS)
+**Server won't start:**
+- Check PostgreSQL is running: `sudo systemctl status postgresql`
 - Verify `.env` database credentials
 - Ensure virtual environment is activated
-- Test database connection: `python manage.py dbshell`
 
-**Database connection failed**
+**Database connection failed:**
+- Test connection: `psql -U link_crush_user -d link_crush -h localhost`
+- Check database exists: `psql -U postgres -l | grep link_crush`
 
-- Confirm PostgreSQL service is running
-- Check database exists: `psql -U postgres -l | grep url_shortener`
-- Verify user permissions:
-  ```sql
-  psql -U postgres
-  \c url_shortener;
-  \du url_shortener_user;
-  ```
-- Test connection manually: `psql -U url_shortener_user -d url_shortener -h localhost`
+### Frontend Issues
 
-**Migration errors**
+**Next.js build fails:**
+- Clear cache: `rm -rf .next node_modules package-lock.json`
+- Reinstall: `npm install`
+- Check Node.js version: `node --version` (requires 18+)
 
-- Check migration status: `python manage.py showmigrations`
-- Reset migrations (development only):
-  ```bash
-  rm backend/urls/migrations/0*.py
-  python manage.py makemigrations urls
-  python manage.py migrate
-  ```
+**Tailwind styles not working:**
+- Ensure you're using Tailwind v4 syntax in `globals.css`
+- Restart dev server after config changes
 
-**CORS errors**
+**API calls failing:**
+- Check `NEXT_PUBLIC_API_URL` in `.env.local`
+- Verify backend is running on correct port
+- Check browser Network tab for CORS errors
 
-- Check `CORS_ALLOWED_ORIGINS` in Django settings
-- Verify frontend URL is included
+### Common Issues
 
-**Frontend API calls failing**
+**CORS errors:**
+- Add frontend URL to `CORS_ALLOWED_ORIGINS` in Django settings
+- Ensure trailing slashes match between frontend and backend URLs
 
-- Confirm backend is running on correct port
-- Check browser Network tab for errors
-
-**PostgreSQL specific issues**
-
-- **Connection refused**: Ensure PostgreSQL is running and accepting connections
-- **Authentication failed**: Check username/password in `.env`
-- **Database does not exist**: Create database using the commands in Step 6
-- **Permission denied**: Ensure user has proper database privileges
+**JWT token expired:**
+- Tokens auto-refresh in modern frontend
+- Legacy frontend requires manual re-login
 
 ## Contributing
+
+1. Fork the repository
+2. Create feature branch from `dev`
+3. Make your changes
+4. Test both frontend options
+5. Submit pull request to `dev` branch
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
@@ -483,4 +472,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Support**: Create an [issue](https://github.com/HERALDEXX/url-shortener/issues) for bugs or questions.
+**⭐ Star this repo** if you found it helpful!
+
+**🐛 Found a bug?** Create an [issue](https://github.com/HERALDEXX/link-crush/issues)
+
+**💡 Have a feature idea?** We'd love to hear it in [discussions](https://github.com/HERALDEXX/link-crush/discussions)
