@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "URL Shortener",
+  title: "Link Crush",
   description: "Transform long URLs into short, shareable links",
 };
 

@@ -1,6 +1,6 @@
 # backend/urlshortener/settings.py
 """
-Django settings for URL Shortener project.
+Django settings for Link Crush project.
 """
 
 from pathlib import Path

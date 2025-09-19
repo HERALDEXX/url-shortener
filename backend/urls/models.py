@@ -1,6 +1,6 @@
 # backend/urls/models.py
 """
-Django models for URL Shortener
+Django models for Link Crush
 """
 
 from django.conf import settings

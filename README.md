@@ -126,15 +126,16 @@ pip install -r requirements.txt
 cd ..  # Go back to root directory for shared .env
 ```
 
-### **Step 4: Environment setup**
+### **Step 4: Environment setup (Backend)**
+> Windows:
+>```bash
+>copy .env.example .env
+>```
 
-```bash
-# Windows
-copy .env.example .env
-
-# Unix-based (macOS, Linux, etc)
-cp .env.example .env
-```
+> Unix-based (macOS, Linux, WSL, etc):
+>```bash
+>cp .env.example .env
+>```
 
 Generate Django secret key:
 ```bash
@@ -193,6 +194,17 @@ python manage.py collectstatic  # If DEBUG=False
 ```bash
 python manage.py runserver
 ```
+
+### **Step 8: Environment setup (Frontend)**
+> Windows:
+> ```bash
+> cd frontend && copy .env.example .env.local
+> ```
+
+> Unix-based (macOS, Linux, WSL, etc):
+> ```bash
+> cd frontend && cp .env.example .env.local
+> ```
 
 ## Frontend Options
 

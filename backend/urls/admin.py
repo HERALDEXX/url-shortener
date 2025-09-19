@@ -1,6 +1,6 @@
 # backend/urls/admin.py
 """
-Django Admin configuration for URL Shortener
+Django Admin configuration for LinkCrush
 """
 
 from django.contrib import admin
@@ -332,6 +332,6 @@ class URLModelAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 
 # Admin customization
-admin.site.site_header = "URL Shortener Administration"
-admin.site.site_title = "URL Shortener Admin"
-admin.site.index_title = "Welcome to URL Shortener Administration"
+admin.site.site_header = "LinkCrush Administration"
+admin.site.site_title = "LinkCrush Admin"
+admin.site.index_title = "Welcome to LinkCrush Administration"

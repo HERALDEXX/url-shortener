@@ -1,4 +1,4 @@
-// URL Shortener Frontend Application
+// Link Crush Frontend Application
 // Description: Handles UI interactions and API communication
 
 function getCookie(name) {
@@ -145,7 +145,7 @@ async function initAuthUI() {
         document.getElementById("loginPass").value = "";
       }
     });
-    
+
   document.getElementById("logoutBtn")?.addEventListener("click", () => {
     logoutAndClearToken();
   });

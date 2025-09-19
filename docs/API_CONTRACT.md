@@ -1,4 +1,4 @@
-# URL Shortener API Contract
+# LinkCrush API Contract
 
 **Version**: 1.0.0  
 **Base URL**: [`http://localhost:8000/api/`](http://localhost:8000/api/)
@@ -123,7 +123,8 @@ This API provides endpoints for shortening URLs, retrieving stats on shortened U
 - 403 Forbidden: `{"error": "Not allowed"}` (insufficient permissions)
 - 404 Not Found: URL not found
 
-**Notes**: 
+**Notes**:
+
 - Only the URL owner or staff users can delete a URL
 - If URL has no owner (created before authentication), only staff can delete
 - Requires valid JWT token in Authorization header
@@ -184,7 +185,7 @@ This API provides endpoints for shortening URLs, retrieving stats on shortened U
 
 **Responses**:
 
-- 200 OK: `{"status": "healthy", "service": "url-shortener", "version": "1.0.0"}`
+- 200 OK: `{"status": "healthy", "service": "link-crush", "version": "1.0.0"}`
 
 **Notes**: Always succeeds if server responds. Useful for monitoring and load balancer health checks.
 
@@ -201,7 +202,7 @@ This API provides endpoints for shortening URLs, retrieving stats on shortened U
 - 200 OK:
   ```json
   {
-    "message": "URL Shortener API",
+    "message": "Link Crush API",
     "version": "1.0.0",
     "endpoints": {
       "shorten": "POST /api/shorten",
@@ -221,6 +222,7 @@ This API provides endpoints for shortening URLs, retrieving stats on shortened U
 User accounts must be created through the Django admin dashboard:
 
 1. **Start the backend server:**
+
    ```bash
    cd backend && python manage.py runserver
    ```
@@ -244,6 +246,7 @@ User accounts must be created through the Django admin dashboard:
 ### JWT Token Usage
 
 Include JWT tokens in requests using the Authorization header:
+
 ```
 Authorization: Bearer your_jwt_access_token_here
 ```
@@ -261,6 +264,7 @@ Authorization: Bearer your_jwt_access_token_here
 ### Error Response Format
 
 All errors return JSON with descriptive messages:
+
 ```json
 {
   "error": "Description of what went wrong"
@@ -268,6 +272,7 @@ All errors return JSON with descriptive messages:
 ```
 
 Or for DRF authentication errors:
+
 ```json
 {
   "detail": "Authentication credentials were not provided."
@@ -311,6 +316,7 @@ CREATE INDEX urls_owner_id_idx ON urls(owner_id);
 ## Example Usage
 
 ### Shorten a URL
+
 ```bash
 curl -X POST http://localhost:8000/api/shorten \
   -H "Content-Type: application/json" \
@@ -318,11 +324,13 @@ curl -X POST http://localhost:8000/api/shorten \
 ```
 
 ### Get all statistics
+
 ```bash
 curl http://localhost:8000/api/stats
 ```
 
 ### Login and get tokens
+
 ```bash
 curl -X POST http://localhost:8000/api/token/ \
   -H "Content-Type: application/json" \
@@ -330,18 +338,21 @@ curl -X POST http://localhost:8000/api/token/ \
 ```
 
 ### Delete a URL (authenticated)
+
 ```bash
 curl -X DELETE http://localhost:8000/api/urls/abc123/ \
   -H "Authorization: Bearer your_jwt_token"
 ```
 
 ### Test redirect
+
 ```bash
 curl -I http://localhost:8000/abc123
 # Should return 302 redirect to original URL
 ```
 
 ### Database connection test
+
 ```bash
 # Test PostgreSQL connection
 psql -U url_shortener_user -d url_shortener -h localhost
