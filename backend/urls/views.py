@@ -1,6 +1,6 @@
 # backend/urls/views.py
 """
-API views for URL Shortener (improved)
+API views for Link Crush (improved)
 - Uses DRF parsing (request.data)
 - Normalizes and extracts redirect targets from tracking URLs
 - Clear logging and error handling
@@ -223,7 +223,7 @@ def health_check(request):
     """
     return Response({
         'status': 'healthy',
-        'service': 'url-shortener',
+        'service': 'link-crush',
         'version': '1.0.0'
     })
 
@@ -235,7 +235,7 @@ def api_info(request):
     API information endpoint
     """
     return Response({
-        'message': 'URL Shortener API',
+        'message': 'Link Crush API',
         'version': '1.0.0',
         'endpoints': {
             'shorten': 'POST /api/shorten',

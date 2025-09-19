@@ -1,4 +1,4 @@
-# Django URL Shortener Backend Dependencies
+# Django Link Crush Backend Dependencies
 
 # Django Framework
 Django==4.2.22

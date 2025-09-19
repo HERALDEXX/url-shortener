@@ -6,16 +6,16 @@ Thanks for your interest in contributing! Please follow these guidelines to keep
 
 ```bash
 git checkout -b dev/type/name
-````
+```
 
-* **type** = feature type (e.g., `feature`, `fix`, `chore`, `docs`, `hotfix`, etc)
-* **name** = short description in kebab-case (e.g., `login-auth`, `analytics-dashboard`, etc)
+- **type** = feature type (e.g., `feature`, `fix`, `chore`, `docs`, `hotfix`, etc)
+- **name** = short description in kebab-case (e.g., `login-auth`, `analytics-dashboard`, etc)
 
 ### Examples
 
-* `dev/feature/analytics-dashboard`
-* `dev/fix/login-error`
-* `dev/docs/api-readme`
+- `dev/feature/analytics-dashboard`
+- `dev/fix/login-error`
+- `dev/docs/api-readme`
 
 > **Note:** The `main` branch is protected and should only receive merges from `dev` once changes are stable and reviewed.
 
@@ -29,6 +29,7 @@ git checkout -b dev/type/name
    ```bash
    python manage.py test
    ```
+
 5. Commit with a clear message (Conventional Commits style preferred).
    See [Conventional Commits](https://www.conventionalcommits.org) for details.
    **Example:**
@@ -36,17 +37,18 @@ git checkout -b dev/type/name
    ```bash
    git commit -m "feat(analytics): add dashboard charts"
    ```
-6. Push your branch and open a Pull Request against [`dev`](https://github.com/HERALDEXX/url-shortener/tree/dev) branch
+
+6. Push your branch and open a Pull Request against [`dev`](https://github.com/HERALDEXX/link-crush/tree/dev) branch
 
 ## Pull Request Guidelines
 
-* Ensure tests pass before submission
-* Update documentation if needed
-* Keep PRs focused and small when possible
-* Use descriptive titles (e.g., `feat: implement link analytics`)
-* Reference related issues in the PR description
-* Use **Draft PRs** for work-in-progress contributions
+- Ensure tests pass before submission
+- Update documentation if needed
+- Keep PRs focused and small when possible
+- Use descriptive titles (e.g., `feat: implement link analytics`)
+- Reference related issues in the PR description
+- Use **Draft PRs** for work-in-progress contributions
 
 ## Support
 
-For questions or issues, open an [issue](https://github.com/HERALDEXX/url-shortener/issues).
+For questions or issues, open an [issue](https://github.com/HERALDEXX/link-crush/issues).

@@ -1,4 +1,4 @@
--- URL Shortener Database Schema for PostgreSQL
+-- Link Crush Database Schema for PostgreSQL
 -- PostgreSQL 12+ Compatible
 
 -- Create database (run this first as superuser)

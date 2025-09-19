@@ -1,6 +1,6 @@
 # backend/urlshortener/settings.py
 """
-Django settings for URL Shortener project.
+Django settings for Link Crush project.
 """
 
 from pathlib import Path
@@ -74,8 +74,8 @@ WSGI_APPLICATION = 'urlshortener.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DATABASE_NAME', 'url_shortener'),
-        'USER': os.getenv('DATABASE_USER', 'url_shortener_user'),
+        'NAME': os.getenv('DATABASE_NAME', 'link_crush'),
+        'USER': os.getenv('DATABASE_USER', 'link_crush_user'),
         'PASSWORD': os.getenv('DATABASE_PASSWORD', ''),
         'HOST': os.getenv('DATABASE_HOST', 'localhost'),
         'PORT': os.getenv('DATABASE_PORT', '5432'),
